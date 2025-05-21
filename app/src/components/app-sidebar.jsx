@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 import { duration } from "@mui/material";
+import Footer from "@/components/footer";
 
 function SidebarMenu() {
   const [collapsed, setCollapsed] = useState(true);
@@ -33,6 +34,7 @@ function SidebarMenu() {
   const toggleSidebar = () => {
     setCollapsed(!collapsed);
   };
+  const menu = [{ name: "Dashboard", icon: <Home />, link: "/" }];
 
   return (
     <motion.div
@@ -114,37 +116,15 @@ function SidebarMenu() {
               },
             }}
           >
-            <MenuItem
-              icon={<Home size={20} />}
-              component={<Link to="/" />}
-              className="mt-4"
-            >
-              Home
-            </MenuItem>
-            <MenuItem
-              icon={<Info size={20} />}
-              component={<Link to="/about" />}
-            >
-              About
-            </MenuItem>
-            <MenuItem
-              icon={<Phone size={20} />}
-              component={<Link to="/contact" />}
-            >
-              Contact
-            </MenuItem>
-            <MenuItem
-              icon={<User size={20} />}
-              component={<Link to="/profile" />}
-            >
-              Profile
-            </MenuItem>
-            <MenuItem
-              icon={<Settings size={20} />}
-              component={<Link to="/settings" />}
-            >
-              Settings
-            </MenuItem>
+            {
+              <MenuItem
+                icon={<Home size={20} />}
+                component={<Link to="/" />}
+                className="mt-4"
+              >
+                Home
+              </MenuItem>
+            }
           </Menu>
 
           <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-800 bg-gray-900">
@@ -172,19 +152,8 @@ function SidebarMenu() {
           </div>
         </Sidebar>
       </div>
-
+      <Footer />
       {/* This is a placeholder for your main content */}
-      <div className="flex-1 p-6 bg-gray-900">
-        <div className="bg-gray-500 rounded-lg shadow-md p-6">
-          <h2 className="text-2xl font-bold mb-4 text-gray-100">
-            Welcome to your dashboard
-          </h2>
-          <p className="text-gray-100">
-            This is where your main content will go. The sidebar has been styled
-            with a dark background and blue accents.
-          </p>
-        </div>
-      </div>
     </motion.div>
   );
 }
