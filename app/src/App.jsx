@@ -3,23 +3,59 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Footer from "@/components/footer";
 import Dashboard from "@/pages/Dashboard";
 import Login from "@/pages/Login";
+import { AuthProvider } from "@/context/AuthProvider";
+import PrivateRoute from "@/components/PrivateRoute";
 
 function App() {
   return (
-    <div className="bg-black min-h-screen flex">
-      <Router>
-        {/* <Sidebar />*/}
-        <Login />
-        <div className="flex-1 flex flex-col">
-          <main className="flex-1 item-center">
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-            </Routes>
-          </main>
-          <Footer />
-        </div>
-      </Router>
-    </div>
+    <AuthProvider>
+      <div className="bg-black min-h-screen flex">
+        <Router>
+          <Routes>
+            {/* Public Route - Login */}
+            <Route path="/auth/login" element={<Login />} />
+
+            {/* Private Routes - Protected by authentication */}
+            <Route
+              path="/"
+              element={
+                <PrivateRoute>
+                  <div className="flex w-full">
+                    <Sidebar />
+                    <div className="flex-1 flex flex-col">
+                      <main className="flex-1 item-center">
+                        <Dashboard />
+                      </main>
+                      <Footer />
+                    </div>
+                  </div>
+                </PrivateRoute>
+              }
+            />
+
+            {/* Add more private routes here as needed */}
+            {/* 
+            <Route 
+              path="/profile" 
+              element={
+                <PrivateRoute>
+                  <div className="flex w-full">
+                    <Sidebar />
+                    <div className="flex-1 flex flex-col">
+                      <main className="flex-1 item-center">
+                        <Profile />
+                      </main>
+                      <Footer />
+                    </div>
+                  </div>
+                </PrivateRoute>
+              } 
+            />
+            */}
+          </Routes>
+        </Router>
+      </div>
+    </AuthProvider>
   );
 }
 
