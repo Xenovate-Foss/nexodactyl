@@ -6,14 +6,18 @@ import {
   Home,
   Info,
   Phone,
+  Server,
   Settings,
   User,
   LogOut,
 } from "lucide-react";
+import { config } from "@/components/api.js";
 
 function SidebarMenu() {
   const [collapsed, setCollapsed] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [appName, setAppName] = useState("Nexodactyl");
+  const [shortName, setShortName] = useState("Nexo");
 
   // Handle responsive behavior
   useEffect(() => {
@@ -28,6 +32,26 @@ function SidebarMenu() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Fixed: Removed async from useEffect and properly handled the async call
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const data = await config();
+        if (data.app_name) {
+          setAppName(data.app_name);
+          document.title = data.app_name;
+        }
+        if (data.short_name) {
+          setShortName(data.short_name);
+        }
+      } catch (error) {
+        console.error("Error fetching config:", error);
+      }
+    };
+
+    fetchConfig();
+  }, []); // Fixed: Removed dependencies that would cause infinite loops
+
   const toggleSidebar = () => {
     setCollapsed(!collapsed);
   };
@@ -35,9 +59,9 @@ function SidebarMenu() {
   // Menu items array
   const menuItems = [
     { name: "Dashboard", icon: <Home size={20} />, link: "/" },
-    { name: "Servers", icon: <User size={20} />, link: "/profile" },
-    { name: "Shop", icon: <Info size={20} />, link: "/about" },
-    { name: "Credentials", icon: <Info size={20} />, link: "/contact" },
+    { name: "Servers", icon: <Server size={20} />, link: "/servers" }, // Fixed: Changed from /profile to /servers
+    { name: "Shop", icon: <Info size={20} />, link: "/shop" }, // Fixed: Changed from /about to /shop
+    { name: "Credentials", icon: <User size={20} />, link: "/credentials" }, // Fixed: Changed icon and link
     { name: "Settings", icon: <Settings size={20} />, link: "/settings" },
   ];
 
@@ -72,7 +96,7 @@ function SidebarMenu() {
                 collapsed && !isMobile ? "text-sm" : "text-xl"
               } transition-all text-white`}
             >
-              {collapsed && !isMobile ? "App" : "My Application"}
+              {collapsed && !isMobile ? shortName : appName}
             </h1>
             {!collapsed && (
               <div className="mt-3 mb-1">
