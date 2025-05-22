@@ -36,8 +36,8 @@ function SidebarMenu() {
   const menuItems = [
     { name: "Dashboard", icon: <Home size={20} />, link: "/" },
     { name: "Servers", icon: <User size={20} />, link: "/profile" },
-    { name: "About", icon: <Info size={20} />, link: "/about" },
-    { name: "Contact", icon: <Phone size={20} />, link: "/contact" },
+    { name: "Shop", icon: <Info size={20} />, link: "/about" },
+    { name: "Credentials", icon: <Info size={20} />, link: "/contact" },
     { name: "Settings", icon: <Settings size={20} />, link: "/settings" },
   ];
 
@@ -150,8 +150,6 @@ function SidebarMenu() {
           </div>
         </Sidebar>
       </div>
-
-      
     </div>
   );
 }
