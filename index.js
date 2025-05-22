@@ -4,18 +4,21 @@ import { config } from "dotenv";
 import axios from "axios";
 import cors from "cors";
 import "./model/db.js";
+import bodyParser from "body-parser"
 
 // env var load
 config();
 
 // controller import
 import configRoute from "./control/config.js";
+import AuthRoute from "./control/auth.js"
 
 // app config
 const app = express();
 
 app.use(express.json());
 app.use(cors());
+app.use(bodyParser.urlencoded())
 
 // logger
 app.use((req, res, next) => {
@@ -25,6 +28,7 @@ app.use((req, res, next) => {
 
 // router setup
 app.use("/api", configRoute);
+app.use("/api/auth", AuthRoute)
 
 // panel connection test
 if (!process.env.panel_url || !process.env.panel_key) {
