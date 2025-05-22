@@ -10,9 +10,6 @@ import {
   User,
   LogOut,
 } from "lucide-react";
-import { motion } from "motion/react";
-import { duration } from "@mui/material";
-import Footer from "@/components/footer";
 
 function SidebarMenu() {
   const [collapsed, setCollapsed] = useState(true);
@@ -34,18 +31,18 @@ function SidebarMenu() {
   const toggleSidebar = () => {
     setCollapsed(!collapsed);
   };
-  const menu = [{ name: "Dashboard", icon: <Home />, link: "/" }];
+
+  // Menu items array
+  const menuItems = [
+    { name: "Dashboard", icon: <Home size={20} />, link: "/" },
+    { name: "Servers", icon: <User size={20} />, link: "/profile" },
+    { name: "About", icon: <Info size={20} />, link: "/about" },
+    { name: "Contact", icon: <Phone size={20} />, link: "/contact" },
+    { name: "Settings", icon: <Settings size={20} />, link: "/settings" },
+  ];
 
   return (
-    <motion.div
-      className="flex h-screen"
-      layoutId="underline"
-      initial={{ opacity: 0 }}
-      animate={{
-        opacity: 1,
-        transition: { duration: 0.8, ease: "easeInOut" },
-      }}
-    >
+    <div className="flex h-screen">
       <div className="relative">
         <button
           onClick={toggleSidebar}
@@ -81,7 +78,7 @@ function SidebarMenu() {
               <div className="mt-3 mb-1">
                 <img
                   className="rounded-xl shadow-lg mx-auto border-2 border-blue-500"
-                  src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ7B_F64nWwBgzKqjlNZixSl9yFDtUiR2jiTgEsNJzOkA&s"
+                  src="/api/placeholder/200/100"
                   alt="Banner"
                   style={{ maxWidth: "200px" }}
                 />
@@ -116,15 +113,16 @@ function SidebarMenu() {
               },
             }}
           >
-            {
+            {menuItems.map((item, index) => (
               <MenuItem
-                icon={<Home size={20} />}
-                component={<Link to="/" />}
-                className="mt-4"
+                key={index}
+                icon={item.icon}
+                component={<Link to={item.link} />}
+                className="mt-2"
               >
-                Home
+                {item.name}
               </MenuItem>
-            }
+            ))}
           </Menu>
 
           <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-800 bg-gray-900">
@@ -152,9 +150,9 @@ function SidebarMenu() {
           </div>
         </Sidebar>
       </div>
-      <Footer />
-      {/* This is a placeholder for your main content */}
-    </motion.div>
+
+      
+    </div>
   );
 }
 

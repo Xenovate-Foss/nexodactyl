@@ -26,3 +26,30 @@
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
+
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Add this to your global CSS or component styles */
+.transition-delay-100 {
+  transition-delay: 100ms;
+}
+.transition-delay-200 {
+  transition-delay: 200ms;
+}
+.transition-delay-300 {
+  transition-delay: 300ms;
+}
+.transition-delay-400 {
+  transition-delay: 400ms;
+}
+.transition-delay-500 {
+  transition-delay: 500ms;
+}
