@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthProvider";
 import { userData } from "@/components/api";
+import {MemoryStick, HardDrive, Cpu} from "lucide-react"
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -17,7 +18,7 @@ const Dashboard = () => {
         setAdditionalData(data);
       } catch (err) {
         console.error("Error fetching user data:", err);
-        setError("Failed to load user data");
+        setError("Failed to load user data. Please try refreshing the page.");
       } finally {
         setLoading(false);
       }
@@ -31,15 +32,34 @@ const Dashboard = () => {
     }
   }, [user]);
 
-  const handleLogout = () => {
-    logout();
+  
+  const handleRetry = () => {
+    if (user) {
+      const fetchData = async () => {
+        try {
+          setLoading(true);
+          setError(null);
+          const data = await userData();
+          setAdditionalData(data);
+        } catch (err) {
+          console.error("Error fetching user data:", err);
+          setError("Failed to load user data. Please try refreshing the page.");
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchData();
+    }
   };
 
   if (loading) {
     return (
-      <div className="p-6 text-white">
+      <div className="min-h-screen bg-gray-900 p-6 text-white">
         <div className="flex justify-center items-center h-64">
-          <div className="text-lg">Loading...</div>
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <div className="text-lg">Loading dashboard...</div>
+          </div>
         </div>
       </div>
     );
@@ -47,74 +67,98 @@ const Dashboard = () => {
 
   if (!user) {
     return (
-      <div className="p-6 text-white">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
-          <p>Please log in to view the dashboard.</p>
+      <div className="min-h-screen bg-gray-900 p-6 text-white">
+        <div className="text-center mt-20">
+          <h1 className="text-3xl font-bold mb-4">Access Denied</h1>
+          <p className="text-gray-300 mb-6">Please log in to view the dashboard.</p>
+          <button 
+            onClick={() => window.location.href = '/login'}
+            className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg transition-colors"
+          >
+            Go to Login
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 text-white">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <div className="flex items-center space-x-4">
-          <span>Welcome, {user?.username || user?.email}</span>
-          <button
-            onClick={handleLogout}
-            className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
-          >
-            Logout
-          </button>
-        </div>
+    <div className="min-h-screen bg-gray-900 p-6 text-white">
+      {/* Header Section */}
+
+      {/* Welcome Section */}
+      <div className="p-6 mt-4 mb-6 bg-[url(/3d-fantasy-scene.jpg)] bg-cover bg-center rounded-lg shadow-lg">
+        <h2 className="text-2xl font-semibold mb-2">
+          Welcome, {user?.firstname || 'User'}!
+        </h2>
+        {additionalData?.user?.root_admin && (
+          <span className="inline-block bg-yellow-500 text-black px-3 py-1 rounded-full text-sm font-medium">
+            Administrator
+          </span>
+        )}
       </div>
 
+      {/* Error Display */}
       {error && (
-        <div className="bg-red-900 border border-red-700 text-red-100 px-4 py-3 rounded mb-6">
-          {error}
+        <div className="bg-red-900/50 border border-red-700 text-red-100 px-4 py-3 rounded-lg mb-6">
+          <div className="flex justify-between items-center">
+            <span>{error}</span>
+            <button
+              onClick={handleRetry}
+              className="bg-red-700 hover:bg-red-600 px-3 py-1 rounded text-sm transition-colors"
+            >
+              Retry
+            </button>
+          </div>
         </div>
       )}
 
-      <div className="grid gap-6">
-        <div className="bg-gray-800 p-6 rounded-lg">
-          <h2 className="text-xl mb-4">User Information</h2>
-          <div className="space-y-2 text-sm text-gray-300">
-            <p>
-              <span className="font-medium">User ID:</span> {user.id}
-            </p>
-            <p>
-              <span className="font-medium">Email:</span> {user.email}
-            </p>
-            {user?.username && (
-              <p>
-                <span className="font-medium">Username:</span> {user.username}
-              </p>
-            )}
-            {additionalData?.user?.createdAt && (
-              <p>
-                <span className="font-medium">Member since:</span>{" "}
-                {new Date(additionalData.user.createdAt).toLocaleDateString()}
-              </p>
-            )}
-          </div>
-        </div>
-
-        <div className="bg-gray-800 p-6 rounded-lg">
-          <h2 className="text-xl mb-4">Protected Content</h2>
-          <p>This content is only visible to authenticated users.</p>
-
-          {additionalData && (
-            <div className="mt-4 p-4 bg-gray-700 rounded">
-              <h3 className="text-lg font-medium mb-2">Additional Data</h3>
-              <pre className="text-sm text-gray-300 overflow-auto">
-                {JSON.stringify(additionalData, null, 2)}
-              </pre>
+      {/* Main Content */}
+      {additionalData ? (
+        <div className="grid gap-6">
+          {/* Resource Information */}
+          {additionalData.resources && (
+            <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
+              <h3 className="text-xl font-semibold mb-4">System Resources</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {additionalData.resources.ram && (
+                  <div className="bg-gray-700 p-4 rounded-lg">
+                    <h4 className="text-sm font-medium text-gray-300 mb-1 flex gap-2"> <MemoryStick /> RAM</h4>
+                    <p className="text-2xl font-bold text-blue-400">
+                      {additionalData.resources.ram} MB
+                    </p>
+                  </div>
+                )}
+                {additionalData.resources.cpu && (
+                  <div className="bg-gray-700 p-4 rounded-lg">
+                    <h4 className="text-sm font-medium text-gray-300 mb-1 flex gap-2"> <Cpu />CPU</h4>
+                    <p className="text-2xl font-bold text-green-400">
+                      {additionalData.resources.cpu}%
+                    </p>
+                  </div>
+                )}
+                {additionalData.resources.disk && (
+                  <div className="bg-gray-700 p-4 rounded-lg">
+                    <h4 className="text-sm font-medium text-gray-300 mb-1 flex gap-2">
+                      <HardDrive />
+                      Disk
+                    </h4>
+                    <p className="text-2xl font-bold text-purple-400">
+                      {additionalData.resources.disk} MB
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
-      </div>
+      ) : (
+        !loading && !error && (
+          <div className="text-center text-gray-400 mt-10">
+            <p>No data available</p>
+          </div>
+        )
+      )}
     </div>
   );
 };
