@@ -278,8 +278,10 @@ router.get("/me", verifyToken, async (req, res) => {
     if (!resources) {
       resources = await Resources.create();
       user.resourcesId = resources.id;
+      await user.save();
     }
 
+    //console.log(user);
     res.json({
       success: true,
       user: {
@@ -290,6 +292,7 @@ router.get("/me", verifyToken, async (req, res) => {
         email: user.email,
         ptero_id: user.ptero_id,
         root_admin: pteroUser.data.attributes.root_admin,
+        resourcesId: user.resourcesId,
       },
       resources,
     });
