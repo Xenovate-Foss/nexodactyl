@@ -19,6 +19,7 @@ fs.watchFile(".env", () => {
 import configRoute from "./control/config.js";
 import AuthRoute from "./control/auth.js";
 import { syncDatabase } from "./model/db.js";
+import serverRoute from "./control/server.js";
 
 // app config
 const app = express();
@@ -42,6 +43,7 @@ app.use((req, res, next) => {
 // router setup
 app.use("/api", configRoute);
 app.use("/api/auth", AuthRoute);
+app.use("/api", serverRoute);
 
 // panel connection test
 if (!process.env.panel_url || !process.env.panel_key) {
