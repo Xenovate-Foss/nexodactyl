@@ -7,7 +7,7 @@ import User from "../model/User.js";
 import Resources from "../model/resources.js";
 
 const router = Router();
-const conf = process.env;
+const conf = JSON.parse(process.env);
 //console.log(conf);
 
 // Middleware to verify token
