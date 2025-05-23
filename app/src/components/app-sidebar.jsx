@@ -4,14 +4,15 @@ import { Link } from "react-router-dom";
 import {
   Menu as MenuIcon,
   Home,
-  Info,
+  ShoppingCart,
   Phone,
   Server,
   Settings,
   User,
   LogOut,
+  ShieldUser
 } from "lucide-react";
-import { config } from "@/components/api.jsx";
+import { config, userData } from "@/components/api";
 import { useAuth } from "@/context/AuthProvider";
 
 function SidebarMenu() {
@@ -23,6 +24,7 @@ function SidebarMenu() {
   const [banner, setBanner] = useState(
     "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRMPvGURvA8mHv-U4JG4IGlveK_l7l2dSfj3teaHlyzCyzD9kbhM6JBtrM&s=10"
   );
+  const [admin, setAdmin] = useState(false)
 
   // Handle responsive behavior
   useEffect(() => {
@@ -58,6 +60,14 @@ function SidebarMenu() {
     };
 
     fetchConfig();
+
+    const getUserData = async() => {
+      const data = await userData()
+      setAdmin(data?.user?.root_admin)
+    }
+
+    getUserData()
+
   }, []); // Fixed: Removed dependencies that would cause infinite loops
 
   const toggleSidebar = () => {
@@ -68,7 +78,7 @@ function SidebarMenu() {
   const menuItems = [
     { name: "Dashboard", icon: <Home size={20} />, link: "/" },
     { name: "Servers", icon: <Server size={20} />, link: "/servers" }, // Fixed: Changed from /profile to /servers
-    { name: "Shop", icon: <Info size={20} />, link: "/shop" }, // Fixed: Changed from /about to /shop
+    { name: "Shop", icon: <ShoppingCart size={20} />, link: "/shop" }, // Fixed: Changed from /about to /shop
     { name: "Credentials", icon: <User size={20} />, link: "/credentials" }, // Fixed: Changed icon and link
     { name: "Settings", icon: <Settings size={20} />, link: "/settings" },
   ];
@@ -155,6 +165,9 @@ function SidebarMenu() {
                 {item.name}
               </MenuItem>
             ))}
+            {admin && (
+              <MenuItem key="admin-00" icon={<ShieldUser  />}>Admin</MenuItem>
+            )}
           </Menu>
 
           <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-800 bg-gray-900">

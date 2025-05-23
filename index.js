@@ -11,6 +11,7 @@ import fs from "node:fs";
 // env var load
 config();
 fs.watchFile(".env", () => {
+  console.log(".env file changed, reloading configuration...");
   config();
 });
 

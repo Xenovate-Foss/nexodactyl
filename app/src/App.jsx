@@ -10,7 +10,7 @@ import Register from "@/pages/Register"
 function App() {
   return (
     <AuthProvider>
-      <div className="bg-black min-h-screen flex">
+      <div className="bg-black min-h-screen w-full flex">
         <Router>
           <Routes>
             {/* Public Route - Login */}

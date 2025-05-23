@@ -1,9 +1,12 @@
-import { Router } from "express";
+import {Router} from "express"
 
-const router = Router();
+const router = Router()
 
 router.get("/config", (req, res) => {
-  const config = process.env;
+  // Create a copy of process.env instead of modifying the original
+  const config = { ...process.env };
+  
+  // Now delete from the copy, not the original
   delete config.panel_key;
   delete config.webhook;
   delete config.sk_privkey;
@@ -15,7 +18,6 @@ router.get("/config", (req, res) => {
 
   res.json({ success: true, config });
 });
-
 const TURNSTILE_SECRET = process.env.site_secret; // From Cloudflare
 
 router.post("/verify-turnstile", async (req, res) => {
