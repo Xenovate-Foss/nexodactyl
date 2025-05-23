@@ -6,9 +6,13 @@ import cors from "cors";
 import "./model/db.js";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
+import fs from "node:fs";
 
 // env var load
 config();
+fs.watchFile(".env", () => {
+  config();
+});
 
 // controller import
 import configRoute from "./control/config.js";

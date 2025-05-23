@@ -49,6 +49,14 @@ const Resources = db.define(
         min: 0,
       },
     },
+    slots: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: parseInt(process.env.slots) || 1,
+      validate: {
+        min: 0,
+      },
+    },
   },
   {
     tableName: "resources",

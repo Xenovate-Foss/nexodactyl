@@ -20,6 +20,9 @@ function SidebarMenu() {
   const [appName, setAppName] = useState("Nexodactyl");
   const [shortName, setShortName] = useState("Nexo");
   const { user, logout } = useAuth();
+  const [banner, setBanner] = useState(
+    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRMPvGURvA8mHv-U4JG4IGlveK_l7l2dSfj3teaHlyzCyzD9kbhM6JBtrM&s=10"
+  );
 
   // Handle responsive behavior
   useEffect(() => {
@@ -45,6 +48,9 @@ function SidebarMenu() {
         }
         if (data.short_name) {
           setShortName(data.short_name);
+        }
+        if (data.app_banner) {
+          setBanner(data.app_banner);
         }
       } catch (error) {
         console.error("Error fetching config:", error);
@@ -104,7 +110,7 @@ function SidebarMenu() {
               <div className="mt-3 mb-1">
                 <img
                   className="rounded-xl shadow-lg mx-auto border-2 border-blue-500"
-                  src="/api/placeholder/200/100"
+                  src={banner}
                   alt="Banner"
                   style={{ maxWidth: "200px" }}
                 />
@@ -159,7 +165,7 @@ function SidebarMenu() {
                     U
                   </div>
                   <span className="ml-2 text-sm text-gray-300">
-                    {user?.name}
+                    {user?.username}
                   </span>
                 </div>
                 <LogOut

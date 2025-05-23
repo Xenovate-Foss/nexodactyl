@@ -7,8 +7,10 @@ import User from "../model/User.js";
 import Resources from "../model/resources.js";
 
 const router = Router();
-const conf = JSON.parse(process.env);
+const conf = JSON.parse(JSON.stringify(process.env));
 //console.log(conf);
+console.clear();
+console.log(conf);
 
 // Middleware to verify token
 export const verifyToken = (req, res, next) => {
@@ -72,7 +74,7 @@ router.post("/login", async (req, res) => {
           },
           {
             headers: {
-              Authorization: `Bearer ${process.env.panel_key}`,
+              Authorization: `Bearer ${conf.panel_key}`,
               Accept: "application/json",
               "Content-Type": "application/json",
             },
@@ -156,7 +158,7 @@ router.post("/register", async (req, res) => {
         `${conf.panel_url}/api/application/users?filter[email]=${email}`,
         {
           headers: {
-            Authorization: `Bearer ${process.env.panel_key}`,
+            Authorization: `Bearer ${conf.panel_key}`,
             Accept: "application/json",
             "Content-Type": "application/json",
           },
@@ -176,7 +178,7 @@ router.post("/register", async (req, res) => {
           },
           {
             headers: {
-              Authorization: `Bearer ${process.env.panel_key}`,
+              Authorization: `Bearer ${conf.panel_key}`,
               Accept: "application/json",
               "Content-Type": "application/json",
             },
@@ -264,7 +266,7 @@ router.get("/me", verifyToken, async (req, res) => {
       `${conf.panel_url}/api/application/users/${user.ptero_id}`,
       {
         headers: {
-          Authorization: `Bearer ${process.env.panel_key}`,
+          Authorization: `Bearer ${conf.panel_key}`,
           Accept: "application/json",
           "Content-Type": "application/json",
         },
