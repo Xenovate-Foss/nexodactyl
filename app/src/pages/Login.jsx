@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthProvider";
 import { Navigate, useLocation, Link } from "react-router-dom";
-import { config } from "@/components/api.js";
+import { config } from "@/components/api";
 import {
   Eye,
   EyeOff,

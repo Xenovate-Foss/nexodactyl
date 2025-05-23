@@ -4,21 +4,29 @@ import { config } from "dotenv";
 import axios from "axios";
 import cors from "cors";
 import "./model/db.js";
-import bodyParser from "body-parser"
+import bodyParser from "body-parser";
+import cookieParser from "cookie-parser";
 
 // env var load
 config();
 
 // controller import
 import configRoute from "./control/config.js";
-import AuthRoute from "./control/auth.js"
+import AuthRoute from "./control/auth.js";
+import { syncDatabase } from "./model/db.js";
 
 // app config
 const app = express();
 
 app.use(express.json());
-app.use(cors());
-app.use(bodyParser.urlencoded())
+app.use(
+  cors({
+    origin: "*",
+    credentials: true,
+  })
+);
+app.use(bodyParser.urlencoded());
+app.use(cookieParser());
 
 // logger
 app.use((req, res, next) => {
@@ -28,7 +36,7 @@ app.use((req, res, next) => {
 
 // router setup
 app.use("/api", configRoute);
-app.use("/api/auth", AuthRoute)
+app.use("/api/auth", AuthRoute);
 
 // panel connection test
 if (!process.env.panel_url || !process.env.panel_key) {
@@ -54,6 +62,8 @@ if (!process.env.panel_url || !process.env.panel_key) {
     }
   })();
 }
+
+syncDatabase();
 
 // listener
 app.listen(3000, () => console.log("started at port 3000"));

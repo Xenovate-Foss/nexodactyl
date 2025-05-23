@@ -11,13 +11,15 @@ import {
   User,
   LogOut,
 } from "lucide-react";
-import { config } from "@/components/api.js";
+import { config } from "@/components/api.jsx";
+import { useAuth } from "@/context/AuthProvider";
 
 function SidebarMenu() {
   const [collapsed, setCollapsed] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [appName, setAppName] = useState("Nexodactyl");
   const [shortName, setShortName] = useState("Nexo");
+  const { user, logout } = useAuth();
 
   // Handle responsive behavior
   useEffect(() => {
@@ -156,11 +158,14 @@ function SidebarMenu() {
                   <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
                     U
                   </div>
-                  <span className="ml-2 text-sm text-gray-300">User</span>
+                  <span className="ml-2 text-sm text-gray-300">
+                    {user?.name}
+                  </span>
                 </div>
                 <LogOut
                   size={18}
                   className="text-gray-400 hover:text-white cursor-pointer"
+                  onClick={logout}
                 />
               </div>
             )}
