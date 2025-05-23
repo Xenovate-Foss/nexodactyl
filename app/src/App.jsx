@@ -5,7 +5,8 @@ import Dashboard from "@/pages/Dashboard";
 import Login from "@/pages/Login";
 import { AuthProvider } from "@/context/AuthProvider";
 import PrivateRoute from "@/components/PrivateRoute";
-import Register from "@/pages/Register"
+import Register from "@/pages/Register";
+import NotFound from "@/pages/NotFound";
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
             {/* Public Route - Login */}
             <Route path="/auth/login" element={<Login />} />
             <Route path="/auth/register" element={<Register />} />
+            <Route path="*" element={<NotFound />} />
             {/* Private Routes - Protected by authentication */}
             <Route
               path="/"
