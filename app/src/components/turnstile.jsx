@@ -3,7 +3,7 @@ import { config } from "./api";
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 
-function TurnstileWidget({ onComplete }) {
+function TurnstileWidget({ onComplete, className }) {
   const turnstile = useTurnstile();
   const [siteKey, setSiteKey] = useState();
   const [loading, setLoading] = useState(true);
@@ -66,7 +66,14 @@ function TurnstileWidget({ onComplete }) {
     return <div>No site key available</div>;
   }
 
-  return <Turnstile sitekey={siteKey} onVerify={onVerify} onError={onError} />;
+  return (
+    <Turnstile
+      sitekey={siteKey}
+      onVerify={onVerify}
+      onError={onError}
+      className={className}
+    />
+  );
 }
 
 export default TurnstileWidget;
