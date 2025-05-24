@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthProvider";
 import { userData } from "@/components/api";
-import {MemoryStick, HardDrive, Cpu} from "lucide-react"
+import { MemoryStick, HardDrive, Cpu } from "lucide-react";
+import Servers from "@/components/servers";
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -32,7 +33,6 @@ const Dashboard = () => {
     }
   }, [user]);
 
-  
   const handleRetry = () => {
     if (user) {
       const fetchData = async () => {
@@ -70,9 +70,11 @@ const Dashboard = () => {
       <div className="min-h-screen bg-gray-900 p-6 text-white">
         <div className="text-center mt-20">
           <h1 className="text-3xl font-bold mb-4">Access Denied</h1>
-          <p className="text-gray-300 mb-6">Please log in to view the dashboard.</p>
-          <button 
-            onClick={() => window.location.href = '/login'}
+          <p className="text-gray-300 mb-6">
+            Please log in to view the dashboard.
+          </p>
+          <button
+            onClick={() => (window.location.href = "/login")}
             className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg transition-colors"
           >
             Go to Login
@@ -89,7 +91,7 @@ const Dashboard = () => {
       {/* Welcome Section */}
       <div className="p-6 mt-4 mb-6 bg-[url(/3d-fantasy-scene.jpg)] bg-cover bg-center rounded-lg shadow-lg">
         <h2 className="text-2xl font-semibold mb-2">
-          Welcome, {user?.firstname || 'User'}!
+          Welcome, {user?.firstname || "User"}!
         </h2>
         {additionalData?.user?.root_admin && (
           <span className="inline-block bg-yellow-500 text-black px-3 py-1 rounded-full text-sm font-medium">
@@ -119,11 +121,16 @@ const Dashboard = () => {
           {/* Resource Information */}
           {additionalData.resources && (
             <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
-              <h3 className="text-xl font-semibold mb-4">System Resources</h3>
+              <h3 className="text-xl font-semibold mb-4">
+                Available Resources
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {additionalData.resources.ram && (
                   <div className="bg-gray-700 p-4 rounded-lg">
-                    <h4 className="text-sm font-medium text-gray-300 mb-1 flex gap-2"> <MemoryStick /> RAM</h4>
+                    <h4 className="text-sm font-medium text-gray-300 mb-1 flex gap-2">
+                      {" "}
+                      <MemoryStick /> RAM
+                    </h4>
                     <p className="text-2xl font-bold text-blue-400">
                       {additionalData.resources.ram} MB
                     </p>
@@ -131,7 +138,11 @@ const Dashboard = () => {
                 )}
                 {additionalData.resources.cpu && (
                   <div className="bg-gray-700 p-4 rounded-lg">
-                    <h4 className="text-sm font-medium text-gray-300 mb-1 flex gap-2"> <Cpu />CPU</h4>
+                    <h4 className="text-sm font-medium text-gray-300 mb-1 flex gap-2">
+                      {" "}
+                      <Cpu />
+                      CPU
+                    </h4>
                     <p className="text-2xl font-bold text-green-400">
                       {additionalData.resources.cpu}%
                     </p>
@@ -151,9 +162,17 @@ const Dashboard = () => {
               </div>
             </div>
           )}
+          <div className="grid bg-gray-800 rounded-lg shadow-lg p-6">
+            <h1 className="text-xl">Servers you own</h1>
+            <p className="text-gray-700 mb-2">Limited to 3</p>
+            <div className="gap-6">
+              <Servers limit={3} />
+            </div>
+          </div>
         </div>
       ) : (
-        !loading && !error && (
+        !loading &&
+        !error && (
           <div className="text-center text-gray-400 mt-10">
             <p>No data available</p>
           </div>

@@ -156,6 +156,15 @@ export async function del(endpoint) {
   }
 }
 
+export async function getAllServers() {
+  try {
+    const response = await api.get("/api/servers");
+    return response.data;
+  } catch (err) {
+    handleAPIError(error, "Getting all servers");
+  }
+}
+
 // Export the API instance for direct use if needed
 export { api };
 
