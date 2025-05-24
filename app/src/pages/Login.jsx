@@ -11,6 +11,7 @@ import {
   Mail,
   Lock,
 } from "lucide-react";
+import TurnstileWidget from "@/components/turnstile";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -26,6 +27,7 @@ const Login = () => {
   const [attempts, setAttempts] = useState(0);
   const [isLocked, setIsLocked] = useState(false);
   const [lockTimer, setLockTimer] = useState(0);
+  const [verified, setVerified] = useState(false);
 
   const { login, isAuthenticated } = useAuth();
   const location = useLocation();
@@ -295,6 +297,8 @@ const Login = () => {
               )}
             </div>
 
+            <TurnstileWidget onComplete={setVerified} />
+
             {/* Remember Me & Forgot Password */}
             <div className="flex items-center justify-between text-sm">
               <label className="flex items-center">
@@ -317,7 +321,9 @@ const Login = () => {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={isLoading || isLocked || emailError || passwordError}
+              disabled={
+                isLoading || isLocked || emailError || passwordError || verified
+              }
               className="group relative w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 disabled:transform-none shadow-lg"
             >
               {isLoading ? (
