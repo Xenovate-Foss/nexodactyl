@@ -10,7 +10,8 @@ import {
   Settings,
   User,
   LogOut,
-  ShieldUser
+  ShieldUser,
+  Egg
 } from "lucide-react";
 import { config, userData } from "@/components/api";
 import { useAuth } from "@/context/AuthProvider";
@@ -166,7 +167,14 @@ function SidebarMenu() {
               </MenuItem>
             ))}
             {admin && (
-              <MenuItem key="admin-00" icon={<ShieldUser  />}>Admin</MenuItem>
+              <>
+              <h2 className="items-center text-center">Admin section </h2>
+              <MenuItem 
+              key="admin-egg" 
+              icon={<Egg  />}
+              component={<Link to="/admin/egg" />}
+              >Eggs</MenuItem>
+              </>
             )}
           </Menu>
 

@@ -7,6 +7,7 @@ import { AuthProvider } from "@/context/AuthProvider";
 import PrivateRoute from "@/components/PrivateRoute";
 import Register from "@/pages/Register";
 import NotFound from "@/pages/NotFound";
+import EggDash from "@/pages/admin/Egg";
 
 function App() {
   return (
@@ -28,6 +29,22 @@ function App() {
                     <div className="flex-1 flex flex-col">
                       <main className="flex-1 item-center">
                         <Dashboard />
+                      </main>
+                      <Footer />
+                    </div>
+                  </div>
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/admin/egg"
+              element={
+                <PrivateRoute adminRequired={true}>
+                  <div className="flex w-full">
+                    <Sidebar />
+                    <div className="flex-1 flex flex-col">
+                      <main className="flex-1 item-center">
+                        <EggDash />
                       </main>
                       <Footer />
                     </div>

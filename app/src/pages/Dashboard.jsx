@@ -5,7 +5,7 @@ import { MemoryStick, HardDrive, Cpu } from "lucide-react";
 import Servers from "@/components/servers";
 
 const Dashboard = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [additionalData, setAdditionalData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

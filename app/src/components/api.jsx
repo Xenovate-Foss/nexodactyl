@@ -160,8 +160,250 @@ export async function getAllServers() {
   try {
     const response = await api.get("/api/servers");
     return response.data;
-  } catch (err) {
+  } catch (error) {
     handleAPIError(error, "Getting all servers");
+  }
+}
+
+// ===========================================
+// NODE CRUD OPERATIONS
+// ===========================================
+
+/**
+ * Get all nodes
+ * @returns {Promise<Object>} All nodes data
+ */
+export async function getAllNodes() {
+  try {
+    const response = await api.get("/api/nodes");
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "getAllNodes");
+  }
+}
+
+/**
+ * Get single node by database ID
+ * @param {number} id - Database ID of the node
+ * @returns {Promise<Object>} Node data
+ */
+export async function getNodeById(id) {
+  try {
+    const response = await api.get(`/api/nodes/${id}`);
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "getNodeById");
+  }
+}
+
+/**
+ * Get node by Pterodactyl node ID
+ * @param {number} nodeId - Pterodactyl node ID
+ * @returns {Promise<Object>} Node data
+ */
+export async function getNodeByPterodactylId(nodeId) {
+  try {
+    const response = await api.get(`/api/nodes/pterodactyl/${nodeId}`);
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "getNodeByPterodactylId");
+  }
+}
+
+/**
+ * Create a new node
+ * @param {Object} nodeData - Node data
+ * @param {number} nodeData.nodeId - Pterodactyl node ID
+ * @param {string} nodeData.location - Node location
+ * @returns {Promise<Object>} Created node data
+ */
+export async function createNode(nodeData) {
+  try {
+    const response = await api.post("/api/nodes", nodeData);
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "createNode");
+  }
+}
+
+/**
+ * Update node by database ID (full update)
+ * @param {number} id - Database ID of the node
+ * @param {Object} nodeData - Updated node data
+ * @param {number} nodeData.nodeId - Pterodactyl node ID
+ * @param {string} nodeData.location - Node location
+ * @returns {Promise<Object>} Updated node data
+ */
+export async function updateNode(id, nodeData) {
+  try {
+    const response = await api.put(`/api/nodes/${id}`, nodeData);
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "updateNode");
+  }
+}
+
+/**
+ * Partially update node by database ID
+ * @param {number} id - Database ID of the node
+ * @param {Object} nodeData - Partial node data to update
+ * @returns {Promise<Object>} Updated node data
+ */
+export async function patchNode(id, nodeData) {
+  try {
+    const response = await api.patch(`/api/nodes/${id}`, nodeData);
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "patchNode");
+  }
+}
+
+/**
+ * Delete node by database ID
+ * @param {number} id - Database ID of the node
+ * @returns {Promise<Object>} Deletion confirmation
+ */
+export async function deleteNode(id) {
+  try {
+    const response = await api.delete(`/api/nodes/${id}`);
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "deleteNode");
+  }
+}
+
+/**
+ * Delete node by Pterodactyl node ID
+ * @param {number} nodeId - Pterodactyl node ID
+ * @returns {Promise<Object>} Deletion confirmation
+ */
+export async function deleteNodeByPterodactylId(nodeId) {
+  try {
+    const response = await api.delete(`/api/nodes/pterodactyl/${nodeId}`);
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "deleteNodeByPterodactylId");
+  }
+}
+
+// ===========================================
+// EGG CRUD OPERATIONS (for consistency)
+// ===========================================
+
+/**
+ * Get all eggs
+ * @returns {Promise<Object>} All eggs data
+ */
+export async function getAllEggs() {
+  try {
+    const response = await api.get("/api/eggs");
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "getAllEggs");
+  }
+}
+
+/**
+ * Get single egg by database ID
+ * @param {number} id - Database ID of the egg
+ * @returns {Promise<Object>} Egg data
+ */
+export async function getEggById(id) {
+  try {
+    const response = await api.get(`/api/eggs/${id}`);
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "getEggById");
+  }
+}
+
+/**
+ * Get egg by Pterodactyl egg ID
+ * @param {number} eggId - Pterodactyl egg ID
+ * @returns {Promise<Object>} Egg data
+ */
+export async function getEggByPterodactylId(eggId) {
+  try {
+    const response = await api.get(`/api/eggs/pterodactyl/${eggId}`);
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "getEggByPterodactylId");
+  }
+}
+
+/**
+ * Create a new egg
+ * @param {Object} eggData - Egg data
+ * @param {number} eggData.eggId - Pterodactyl egg ID
+ * @param {string} eggData.name - Egg name
+ * @param {string} eggData.description - Egg description (optional)
+ * @param {string} eggData.img - Egg image URL
+ * @returns {Promise<Object>} Created egg data
+ */
+export async function createEgg(eggData) {
+  try {
+    const response = await api.post("/api/eggs", eggData);
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "createEgg");
+  }
+}
+
+/**
+ * Update egg by database ID (full update)
+ * @param {number} id - Database ID of the egg
+ * @param {Object} eggData - Updated egg data
+ * @returns {Promise<Object>} Updated egg data
+ */
+export async function updateEgg(id, eggData) {
+  try {
+    const response = await api.put(`/api/eggs/${id}`, eggData);
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "updateEgg");
+  }
+}
+
+/**
+ * Partially update egg by database ID
+ * @param {number} id - Database ID of the egg
+ * @param {Object} eggData - Partial egg data to update
+ * @returns {Promise<Object>} Updated egg data
+ */
+export async function patchEgg(id, eggData) {
+  try {
+    const response = await api.patch(`/api/eggs/${id}`, eggData);
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "patchEgg");
+  }
+}
+
+/**
+ * Delete egg by database ID
+ * @param {number} id - Database ID of the egg
+ * @returns {Promise<Object>} Deletion confirmation
+ */
+export async function deleteEgg(id) {
+  try {
+    const response = await api.delete(`/api/eggs/${id}`);
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "deleteEgg");
+  }
+}
+
+/**
+ * Delete egg by Pterodactyl egg ID
+ * @param {number} eggId - Pterodactyl egg ID
+ * @returns {Promise<Object>} Deletion confirmation
+ */
+export async function deleteEggByPterodactylId(eggId) {
+  try {
+    const response = await api.delete(`/api/eggs/pterodactyl/${eggId}`);
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "deleteEggByPterodactylId");
   }
 }
 

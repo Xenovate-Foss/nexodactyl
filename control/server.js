@@ -290,9 +290,9 @@ router.post("/servers", verifyToken, async (req, res) => {
 
     // Validate numeric inputs
     if (
-      ram <= 0 ||
-      disk <= 0 ||
-      cpu <= 0 ||
+      ram <= 1 ||
+      disk <= 1 ||
+      cpu <= 1 ||
       allocations <= 0 ||
       databases < 0
     ) {
@@ -332,7 +332,7 @@ router.post("/servers", verifyToken, async (req, res) => {
     }
 
     // Validate node exists and is available
-    const nodeExists = await Node.findByPk(node);
+    const nodeExists = await Node.find({ where: { nodeId: node } });
     if (!nodeExists || !nodeExists.active) {
       return res.status(400).json({
         success: false,

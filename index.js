@@ -20,6 +20,8 @@ import configRoute from "./control/config.js";
 import AuthRoute from "./control/auth.js";
 import { syncDatabase } from "./model/db.js";
 import serverRoute from "./control/server.js";
+import nodeCrudRoute from "./control/node.js";
+import eggCrudRoute from "./control/egg.js";
 
 // app config
 const app = express();
@@ -44,6 +46,8 @@ app.use((req, res, next) => {
 app.use("/api", configRoute);
 app.use("/api/auth", AuthRoute);
 app.use("/api", serverRoute);
+app.use("/api/nodes", nodeCrudRoute);
+app.use("/api/eggs", eggCrudRoute);
 
 // panel connection test
 if (!process.env.panel_url || !process.env.panel_key) {
