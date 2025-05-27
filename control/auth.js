@@ -54,8 +54,8 @@ const createToken = (user, pteroUser = null) => {
     pteroId: user.ptero_id,
   };
 
-  if (pteroUser?.data?.attributes?.root_admin !== undefined) {
-    payload.root_admin = pteroUser.data.attributes.root_admin;
+  if (pteroUser?.attributes?.root_admin !== undefined) {
+    payload.root_admin = pteroUser.attributes.root_admin;
   }
 
   return jwt.sign(payload, config.secretKey, { expiresIn: config.tokenExpiry });
@@ -77,7 +77,7 @@ const formatUserResponse = (user, pteroUser = null) => ({
   username: user.username,
   email: user.email,
   ptero_id: user.ptero_id,
-  ...(pteroUser && { root_admin: pteroUser.data?.attributes?.root_admin }),
+  ...(pteroUser && { root_admin: pteroUser?.attributes?.root_admin }),
 });
 
 // Pterodactyl API service

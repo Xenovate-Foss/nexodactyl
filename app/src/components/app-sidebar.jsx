@@ -11,10 +11,17 @@ import {
   User,
   LogOut,
   ShieldUser,
-  Egg
+  Egg,
+  ServerCog,
+  PackagePlus,
+  StretchHorizontal,
+  UserRoundCog,
 } from "lucide-react";
 import { config, userData } from "@/components/api";
 import { useAuth } from "@/context/AuthProvider";
+import { ServerCogIcon } from "lucide-react";
+import { ServerCrash } from "lucide-react";
+import { Merge } from "lucide-react";
 
 function SidebarMenu() {
   const [collapsed, setCollapsed] = useState(true);
@@ -25,7 +32,7 @@ function SidebarMenu() {
   const [banner, setBanner] = useState(
     "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRMPvGURvA8mHv-U4JG4IGlveK_l7l2dSfj3teaHlyzCyzD9kbhM6JBtrM&s=10"
   );
-  const [admin, setAdmin] = useState(false)
+  const [admin, setAdmin] = useState(false);
 
   // Handle responsive behavior
   useEffect(() => {
@@ -62,13 +69,12 @@ function SidebarMenu() {
 
     fetchConfig();
 
-    const getUserData = async() => {
-      const data = await userData()
-      setAdmin(data?.user?.root_admin)
-    }
+    const getUserData = async () => {
+      const data = await userData();
+      setAdmin(data?.user?.root_admin);
+    };
 
-    getUserData()
-
+    getUserData();
   }, []); // Fixed: Removed dependencies that would cause infinite loops
 
   const toggleSidebar = () => {
@@ -168,12 +174,20 @@ function SidebarMenu() {
             ))}
             {admin && (
               <>
-              <h2 className="items-center text-center">Admin section </h2>
-              <MenuItem 
-              key="admin-egg" 
-              icon={<Egg  />}
-              component={<Link to="/admin/egg" />}
-              >Eggs</MenuItem>
+                <h2 className="items-center text-center">Admin section </h2>
+                <MenuItem
+                  key="admin-egg"
+                  icon={<Egg />}
+                  component={<Link to="/admin/egg" />}
+                >
+                  Eggs
+                </MenuItem>
+                <MenuItem icon={<ServerCog />}>Nodes</MenuItem>
+                <MenuItem icon={<PackagePlus />}>Products</MenuItem>
+                <MenuItem icon={<UserRoundCog />}>Users</MenuItem>
+                <MenuItem icon={<StretchHorizontal />}>Resources</MenuItem>
+                <MenuItem icon={<ServerCrash />}>Servers</MenuItem>
+                <MenuItem icon={<Merge />}>Purger</MenuItem>
               </>
             )}
           </Menu>
