@@ -1,5 +1,5 @@
 {
-  "name": "workspace",
+  "name": "nexodactyl",
   "module": "index.ts",
   "type": "module",
   "private": true,
