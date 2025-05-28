@@ -8,6 +8,7 @@ import PrivateRoute from "@/components/PrivateRoute";
 import Register from "@/pages/Register";
 import NotFound from "@/pages/NotFound";
 import EggDash from "@/pages/admin/Egg";
+import NodeDash from "@/pages/admin/Nodes";
 
 function App() {
   return (
@@ -45,6 +46,23 @@ function App() {
                     <div className="flex-1 flex flex-col">
                       <main className="flex-1 item-center">
                         <EggDash />
+                      </main>
+                      <Footer />
+                    </div>
+                  </div>
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="/admin/node"
+              element={
+                <PrivateRoute adminRequired={true}>
+                  <div className="flex w-full">
+                    <Sidebar />
+                    <div className="flex-1 flex flex-col">
+                      <main className="flex-1 item-center">
+                        <NodeDash />
                       </main>
                       <Footer />
                     </div>

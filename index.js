@@ -1,3 +1,5 @@
+"use strict";
+
 // dependencies
 import express from "express";
 import { config } from "dotenv";

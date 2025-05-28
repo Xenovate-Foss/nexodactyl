@@ -37,6 +37,7 @@ function TurnstileWidget({ onComplete, className }) {
         // Check response.data.success instead of response.success
         if (response.data.success) {
           onComplete(true);
+          window.__turnstile__ = true;
         } else {
           onComplete(false);
         }

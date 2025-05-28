@@ -7,6 +7,10 @@ const Node = db.define("node", {
     autoIncrement: true,
     primaryKey: true,
   },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
   nodeId: {
     type: DataTypes.INTEGER,
     allowNull: false,

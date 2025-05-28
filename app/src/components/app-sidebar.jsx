@@ -91,7 +91,7 @@ function SidebarMenu() {
   ];
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen z-99999">
       <div className="relative">
         <button
           onClick={toggleSidebar}
@@ -182,7 +182,12 @@ function SidebarMenu() {
                 >
                   Eggs
                 </MenuItem>
-                <MenuItem icon={<ServerCog />}>Nodes</MenuItem>
+                <MenuItem
+                  icon={<ServerCog />}
+                  component={<Link to="/admin/node" />}
+                >
+                  Nodes
+                </MenuItem>
                 <MenuItem icon={<PackagePlus />}>Products</MenuItem>
                 <MenuItem icon={<UserRoundCog />}>Users</MenuItem>
                 <MenuItem icon={<StretchHorizontal />}>Resources</MenuItem>
@@ -192,9 +197,9 @@ function SidebarMenu() {
             )}
           </Menu>
 
-          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-800 bg-gray-900">
+          <div className="absolute top-full bottom-0 left-0 right-0 p-4 border-t border-gray-800 bg-gray-900 sticky">
             {!collapsed && (
-              <div className="flex justify-between items-center mb-2">
+              <div className="flex justify-between items-center mb-2 static">
                 <div className="flex items-center">
                   <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
                     U

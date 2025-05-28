@@ -8,6 +8,7 @@ import React, {
   useMemo,
 } from "react";
 import axios from "axios";
+import { Navigate } from "react-router-dom";
 
 const AuthContext = createContext();
 
@@ -436,6 +437,9 @@ export const AuthProvider = ({ children }) => {
         setUser(userData);
         setError(null);
 
+        window.location.pathname = "/";
+
+        return <Navigate to="/" />;
         return { success: true, user: userData };
       } else {
         const error = {
@@ -564,6 +568,9 @@ export const AuthProvider = ({ children }) => {
         setUser(userData);
         setError(null);
 
+        window.location.pathname = "/";
+
+        return <Navigate to="/" />;
         return { success: true, user: userData };
       } else {
         const error = {
@@ -571,6 +578,7 @@ export const AuthProvider = ({ children }) => {
           message: response.data.error || "Registration failed",
         };
         setError(error);
+
         return { success: false, error: error.message };
       }
     } catch (error) {
@@ -599,6 +607,10 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
         setError(null);
       }
+
+      window.location.pathname = "/";
+
+      return <Navigate to="/auth/login" />;
     }
   }, []);
 

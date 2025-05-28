@@ -73,13 +73,15 @@ router.post("/", verifyToken, async (req, res) => {
     return res.json({ success: false, error: "unauthorized" });
 
   try {
-    const { nodeId, location } = req.body;
+    const { nodeId, location, name } = req.body;
 
     // Basic validation
-    if (!nodeId || !location) {
+    if (!nodeId || !location || !name) {
       return res
         .status(400)
-        .json(formatResponse(false, null, "nodeId and location are required"));
+        .json(
+          formatResponse(false, null, "name, nodeId and location are required")
+        );
     }
 
     // Check if nodeId already exists
@@ -95,6 +97,7 @@ router.post("/", verifyToken, async (req, res) => {
     const newNode = await Node.create({
       nodeId,
       location,
+      name,
     });
 
     res.status(201).json(formatResponse(true, newNode));
@@ -131,7 +134,7 @@ router.put("/:id", verifyToken, async (req, res) => {
     return res.json({ success: false, error: "unauthorized" });
 
   try {
-    const { nodeId, location } = req.body;
+    const { nodeId, location, name } = req.body;
 
     const node = await Node.findByPk(req.params.id);
     if (!node) {
@@ -164,6 +167,7 @@ router.put("/:id", verifyToken, async (req, res) => {
     const updatedNode = await node.update({
       nodeId: nodeId || node.nodeId,
       location: location || node.location,
+      name: name || node.name,
     });
 
     res.json(formatResponse(true, updatedNode));
@@ -209,7 +213,7 @@ router.patch("/:id", verifyToken, async (req, res) => {
 
     // Only update provided fields
     const updateData = {};
-    const allowedFields = ["nodeId", "location"];
+    const allowedFields = ["nodeId", "location", "name"];
 
     allowedFields.forEach((field) => {
       if (req.body[field] !== undefined) {
