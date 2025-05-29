@@ -1,6 +1,8 @@
 import { Sequelize } from "sequelize";
 
-const db = new Sequelize(process.env.db_url);
+const db = new Sequelize(process.env.db_url, {
+  logging: false,
+});
 
 try {
   await db.authenticate();

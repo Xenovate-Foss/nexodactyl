@@ -189,7 +189,12 @@ function SidebarMenu() {
                   Nodes
                 </MenuItem>
                 <MenuItem icon={<PackagePlus />}>Products</MenuItem>
-                <MenuItem icon={<UserRoundCog />}>Users</MenuItem>
+                <MenuItem
+                  icon={<UserRoundCog />}
+                  component={<Link to="/admin/user" />}
+                >
+                  Users
+                </MenuItem>
                 <MenuItem icon={<StretchHorizontal />}>Resources</MenuItem>
                 <MenuItem icon={<ServerCrash />}>Servers</MenuItem>
                 <MenuItem icon={<Merge />}>Purger</MenuItem>

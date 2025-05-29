@@ -23,7 +23,7 @@ class APIError extends Error {
 // Helper function to handle API errors consistently
 const handleAPIError = (error, endpoint) => {
   const status = error.response?.status;
-  const message = error.response?.data?.message || error.message;
+  const message = error.response?.data?.error || error.message;
 
   console.error(`API Error [${endpoint}]:`, {
     status,
@@ -404,6 +404,211 @@ export async function deleteEggByPterodactylId(eggId) {
     return response.data;
   } catch (error) {
     handleAPIError(error, "deleteEggByPterodactylId");
+  }
+}
+
+// ===========================================
+// USER CRUD OPERATIONS
+// ===========================================
+
+/**
+ * Get all users
+ * @returns {Promise<Object>} All users data
+ */
+export async function getAllUsers() {
+  try {
+    const response = await api.get("/api/users");
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "getAllUsers");
+  }
+}
+
+/**
+ * Get single user by database ID
+ * @param {number} id - Database ID of the user
+ * @returns {Promise<Object>} User data
+ */
+export async function getUserById(id) {
+  try {
+    const response = await api.get(`/api/users/${id}`);
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "getUserById");
+  }
+}
+
+/**
+ * Get user by Pterodactyl user ID
+ * @param {number} pteroId - Pterodactyl user ID
+ * @returns {Promise<Object>} User data
+ */
+export async function getUserByPterodactylId(pteroId) {
+  try {
+    const response = await api.get(`/api/users/pterodactyl/${pteroId}`);
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "getUserByPterodactylId");
+  }
+}
+
+/**
+ * Get user by username
+ * @param {string} username - Username
+ * @returns {Promise<Object>} User data
+ */
+export async function getUserByUsername(username) {
+  try {
+    const response = await api.get(`/api/users/username/${username}`);
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "getUserByUsername");
+  }
+}
+
+/**
+ * Get user by email
+ * @param {string} email - User email
+ * @returns {Promise<Object>} User data
+ */
+export async function getUserByEmail(email) {
+  try {
+    const response = await api.get(
+      `/api/users/email/${encodeURIComponent(email)}`
+    );
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "getUserByEmail");
+  }
+}
+
+/**
+ * Create a new user
+ * @param {Object} userData - User data
+ * @param {string} userData.firstName - User's first name (2-50 chars)
+ * @param {string} userData.lastName - User's last name (2-50 chars)
+ * @param {string} userData.username - Username (3-30 chars, alphanumeric)
+ * @param {string} userData.email - User email
+ * @param {string} userData.password - User password (6+ chars)
+ * @param {number} userData.ptero_id - Pterodactyl user ID
+ * @returns {Promise<Object>} Created user data
+ */
+export async function createUser(userData) {
+  try {
+    const response = await api.post("/api/users", userData);
+    return response.data;
+  } catch (error) {
+    return handleAPIError(error, "createUser");
+  }
+}
+
+/**
+ * Update user by database ID (full update)
+ * @param {number} id - Database ID of the user
+ * @param {Object} userData - Updated user data
+ * @returns {Promise<Object>} Updated user data
+ */
+export async function updateUser(id, userData) {
+  try {
+    const response = await api.put(`/api/users/${id}`, userData);
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "updateUser");
+  }
+}
+
+/**
+ * Partially update user by database ID
+ * @param {number} id - Database ID of the user
+ * @param {Object} userData - Partial user data to update
+ * @returns {Promise<Object>} Updated user data
+ */
+export async function patchUser(id, userData) {
+  try {
+    const response = await api.patch(`/api/users/${id}`, userData);
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "patchUser");
+  }
+}
+
+/**
+ * Delete user by database ID
+ * @param {number} id - Database ID of the user
+ * @returns {Promise<Object>} Deletion confirmation
+ */
+export async function deleteUser(id) {
+  try {
+    const response = await api.delete(`/api/users/${id}`);
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "deleteUser");
+  }
+}
+
+/**
+ * Delete user by Pterodactyl user ID
+ * @param {number} pteroId - Pterodactyl user ID
+ * @returns {Promise<Object>} Deletion confirmation
+ */
+export async function deleteUserByPterodactylId(pteroId) {
+  try {
+    const response = await api.delete(`/api/users/pterodactyl/${pteroId}`);
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "deleteUserByPterodactylId");
+  }
+}
+
+/**
+ * Get user's resources
+ * @param {number} id - Database ID of the user
+ * @returns {Promise<Object>} User's resources data
+ */
+export async function getUserResources(id) {
+  try {
+    const response = await api.get(`/api/users/${id}/resources`);
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "getUserResources");
+  }
+}
+
+/**
+ * Update user's resources
+ * @param {number} id - Database ID of the user
+ * @param {Object} resourcesData - Resources data to update
+ * @returns {Promise<Object>} Updated resources data
+ */
+export async function updateUserResources(id, resourcesData) {
+  try {
+    const response = await api.put(`/api/users/${id}/resources`, resourcesData);
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "updateUserResources");
+  }
+}
+
+/**
+ * Search users by various criteria
+ * @param {Object} searchParams - Search parameters
+ * @param {string} searchParams.query - General search query
+ * @param {string} searchParams.firstName - First name filter
+ * @param {string} searchParams.lastName - Last name filter
+ * @Param {string} searchParams.username - Username filter
+ * @param {string} searchParams.email - Email filter
+ * @param {number} searchParams.limit - Maximum results to return
+ * @param {number} searchParams.offset - Results offset for pagination
+ * @returns {Promise<Object>} Search results
+ */
+export async function searchUsers(searchParams = {}) {
+  try {
+    const response = await api.get("/api/users/search", {
+      params: searchParams,
+    });
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "searchUsers");
   }
 }
 

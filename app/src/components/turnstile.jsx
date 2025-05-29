@@ -15,6 +15,7 @@ function TurnstileWidget({ onComplete, className }) {
         setLoading(true);
         setError(null);
         const { site_key } = await config();
+        if (!site_key) return onComplete(true);
         setSiteKey(site_key);
       } catch (err) {
         console.error("Failed to fetch site key:", err);

@@ -10,6 +10,19 @@ import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import fs from "node:fs";
 
+// logo ascii
+let banner;
+fs.readFile("./sm-two.txt", "utf-8", (err, data) => {
+  if (err) throw Error(err);
+  banner = data
+    .replace(/x/g, "\x1b[34m▓\x1b[0m")
+    .replace(/\$/g, "\x1b[30m█\x1b[0m")
+    .replace("%panel_url%", process.env.panel_url)
+    .replace("https://", "")
+    .replace("http://", "")
+    .replace("/", "")
+    .replace("%app_url%", process.env.app_url);
+});
 // env var load
 config();
 fs.watchFile(".env", () => {
@@ -24,8 +37,9 @@ import { syncDatabase } from "./model/db.js";
 import serverRoute from "./control/server.js";
 import nodeCrudRoute from "./control/node.js";
 import eggCrudRoute from "./control/egg.js";
+import userCrudRoute from "./control/user.js";
 
-// app config
+// app conf
 const app = express();
 
 app.use(express.json());
@@ -50,6 +64,7 @@ app.use("/api/auth", AuthRoute);
 app.use("/api", serverRoute);
 app.use("/api/nodes", nodeCrudRoute);
 app.use("/api/eggs", eggCrudRoute);
+app.use("/api", userCrudRoute);
 
 // panel connection test
 if (!process.env.panel_url || !process.env.panel_key) {
@@ -79,7 +94,11 @@ if (!process.env.panel_url || !process.env.panel_key) {
 syncDatabase();
 
 // listener
-app.listen(3000, () => console.log("started at port 3000"));
+app.listen(3000, () => {
+  console.clear();
+  console.log(banner);
+  console.log("started at port 3000");
+});
 if (process.env.CSB) {
   console.warn("Codesandbox Environment detected");
   console.warn(
