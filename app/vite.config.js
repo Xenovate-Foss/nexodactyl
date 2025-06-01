@@ -8,7 +8,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     proxy: {
-      "/api": "https://8sy83g-3000.csb.app",
+      "/api": "https://yvmp72-3000.csb.app",
     },
   },
   resolve: {

@@ -9,6 +9,7 @@ import "./model/db.js";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import fs from "node:fs";
+import morgan from "morgan";
 
 // logo ascii
 let banner;
@@ -38,6 +39,7 @@ import serverRoute from "./control/server.js";
 import nodeCrudRoute from "./control/node.js";
 import eggCrudRoute from "./control/egg.js";
 import userCrudRoute from "./control/user.js";
+import resourcesCrud from "./control/resources.js";
 
 // app conf
 const app = express();
@@ -51,12 +53,13 @@ app.use(
 );
 app.use(bodyParser.urlencoded());
 app.use(cookieParser());
+app.use(morgan());
 
 // logger
-app.use((req, res, next) => {
+/*app.use((req, res, next) => {
   console.log(req.url);
   next();
-});
+});*/
 
 // router setup
 app.use("/api", configRoute);
@@ -64,6 +67,7 @@ app.use("/api/auth", AuthRoute);
 app.use("/api", serverRoute);
 app.use("/api/nodes", nodeCrudRoute);
 app.use("/api/eggs", eggCrudRoute);
+app.use("/api/resources", resourcesCrud);
 app.use("/api", userCrudRoute);
 
 // panel connection test

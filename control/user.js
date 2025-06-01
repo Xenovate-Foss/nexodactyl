@@ -485,7 +485,7 @@ router.post("/users", async (req, res) => {
 });
 
 // Update user (both local and Pterodactyl)
-router.patch("/users/:id", async (req, res) => {
+router.put("/users/:id", async (req, res) => {
   const transaction = await User.sequelize.transaction();
 
   try {

@@ -10,6 +10,8 @@ import NotFound from "@/pages/NotFound";
 import EggDash from "@/pages/admin/Egg";
 import NodeDash from "@/pages/admin/Nodes";
 import UserDash from "@/pages/admin/Users";
+import Resources from "./pages/admin/Resources";
+import ServerManager from "./pages/Server";
 
 function App() {
   return (
@@ -31,6 +33,22 @@ function App() {
                     <div className="flex-1 flex flex-col">
                       <main className="flex-1 item-center">
                         <Dashboard />
+                      </main>
+                      <Footer />
+                    </div>
+                  </div>
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/servers"
+              element={
+                <PrivateRoute>
+                  <div className="flex w-full">
+                    <Sidebar />
+                    <div className="flex-1 flex flex-col">
+                      <main className="flex-1 item-center">
+                        <ServerManager />
                       </main>
                       <Footer />
                     </div>
@@ -81,6 +99,23 @@ function App() {
                     <div className="flex-1 flex flex-col">
                       <main className="flex-1 item-center">
                         <UserDash />
+                      </main>
+                      <Footer />
+                    </div>
+                  </div>
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="/admin/resources"
+              element={
+                <PrivateRoute adminRequired={true}>
+                  <div className="flex w-full">
+                    <Sidebar />
+                    <div className="flex-1 flex flex-col">
+                      <main className="flex-1 item-center">
+                        <Resources />
                       </main>
                       <Footer />
                     </div>

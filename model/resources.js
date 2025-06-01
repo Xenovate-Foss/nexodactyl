@@ -57,6 +57,11 @@ const Resources = db.define(
         min: 0,
       },
     },
+    coins: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: 0,
+    },
   },
   {
     tableName: "resources",
