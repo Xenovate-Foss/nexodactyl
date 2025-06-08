@@ -363,7 +363,14 @@ export async function getServerById(id) {
  */
 export async function createServer(serverData) {
   try {
-    validateRequired(serverData, ["name", "nodeId", "eggId"]);
+    validateRequired(serverData, [
+      "name",
+      "nodeId",
+      "eggId",
+      "ram",
+      "disk",
+      "cpu",
+    ]);
 
     const response = await api.post("/api/servers", serverData);
     return response.data;
@@ -399,6 +406,373 @@ export async function deleteServer(id) {
   } catch (error) {
     handleAPIError(error, "deleteServer");
   }
+}
+
+// ===========================================
+// ADMIN SERVER OPERATIONS
+// ===========================================
+
+/**
+ * Get all servers with pagination and filtering (Admin only)
+ * @param {Object} params - Query parameters
+ * @param {number} params.page - Page number (default: 1)
+ * @param {number} params.limit - Items per page (default: 20)
+ * @param {string} params.search - Search term for server names or user emails
+ * @param {string} params.status - Filter by server status
+ * @param {number} params.userId - Filter by user ID
+ * @param {number} params.nodeId - Filter by node ID
+ * @param {string} params.sortBy - Field to sort by (default: 'createdAt')
+ * @param {string} params.sortOrder - Sort order 'ASC' or 'DESC' (default: 'DESC')
+ * @returns {Promise<Object>} Servers data with pagination
+ */
+export async function getAllServersAdmin(params = {}) {
+  try {
+    const response = await api.get("/admin/servers", { params });
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "getAllServersAdmin");
+  }
+}
+
+/**
+ * Get specific server details by ID (Admin only)
+ * @param {number} id - Server database ID
+ * @returns {Promise<Object>} Detailed server data including panel and resource info
+ */
+export async function getServerByIdAdmin(id) {
+  try {
+    validateRequired({ id }, ["id"]);
+
+    if (!/^\d+$/.test(id.toString())) {
+      throw new Error("Invalid server ID format");
+    }
+
+    const response = await api.get(`/admin/servers/${id}`);
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "getServerByIdAdmin");
+  }
+}
+
+/**
+ * Create a new server for any user (Admin only)
+ * @param {Object} serverData - Server configuration
+ * @param {number} serverData.userId - Target user ID
+ * @param {string} serverData.name - Server name
+ * @param {string} serverData.description - Server description (optional)
+ * @param {number} serverData.ram - RAM in MB
+ * @param {number} serverData.disk - Disk space in MB
+ * @param {number} serverData.cpu - CPU percentage
+ * @param {number} serverData.allocations - Number of allocations (default: 1)
+ * @param {number} serverData.databases - Number of databases (default: 0)
+ * @param {number} serverData.nodeId - Target node ID
+ * @param {number} serverData.eggId - Egg ID for server type
+ * @param {boolean} serverData.skipResourceCheck - Skip resource availability check (default: false)
+ * @returns {Promise<Object>} Created server data
+ */
+export async function createServerAdmin(serverData) {
+  try {
+    validateRequired(serverData, [
+      "userId",
+      "name",
+      "ram",
+      "disk",
+      "cpu",
+      "nodeId",
+      "eggId",
+    ]);
+
+    // Validate numeric fields
+    const numericFields = ["userId", "ram", "disk", "cpu", "nodeId", "eggId"];
+    numericFields.forEach((field) => {
+      if (
+        serverData[field] &&
+        (!Number.isInteger(Number(serverData[field])) ||
+          Number(serverData[field]) <= 0)
+      ) {
+        throw new Error(`${field} must be a positive integer`);
+      }
+    });
+
+    // Validate server name length
+    if (serverData.name.length < 1 || serverData.name.length > 191) {
+      throw new Error("Server name must be between 1 and 191 characters");
+    }
+
+    const response = await api.post("/admin/servers", serverData);
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "createServerAdmin");
+  }
+}
+
+/**
+ * Update any server configuration (Admin only)
+ * @param {number} id - Server database ID
+ * @param {Object} serverData - Updated server data
+ * @param {string} serverData.name - Updated server name (optional)
+ * @param {string} serverData.description - Updated description (optional)
+ * @param {number} serverData.ram - Updated RAM in MB (optional)
+ * @param {number} serverData.disk - Updated disk space in MB (optional)
+ * @param {number} serverData.cpu - Updated CPU percentage (optional)
+ * @param {number} serverData.databases - Updated database count (optional)
+ * @param {number} serverData.allocations - Updated allocation count (optional)
+ * @param {boolean} serverData.skipResourceCheck - Skip resource availability check (default: false)
+ * @returns {Promise<Object>} Update confirmation
+ */
+export async function updateServerAdmin(id, serverData) {
+  try {
+    validateRequired({ id }, ["id"]);
+
+    if (!/^\d+$/.test(id.toString())) {
+      throw new Error("Invalid server ID format");
+    }
+
+    // Validate numeric fields if provided
+    const numericFields = ["ram", "disk", "cpu", "databases", "allocations"];
+    numericFields.forEach((field) => {
+      if (serverData[field] !== undefined) {
+        if (
+          !Number.isInteger(Number(serverData[field])) ||
+          Number(serverData[field]) < 0
+        ) {
+          throw new Error(`${field} must be a non-negative integer`);
+        }
+      }
+    });
+
+    // Validate server name length if provided
+    if (
+      serverData.name !== undefined &&
+      (serverData.name.length < 1 || serverData.name.length > 191)
+    ) {
+      throw new Error("Server name must be between 1 and 191 characters");
+    }
+
+    const response = await api.put(`/admin/servers/${id}`, serverData);
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "updateServerAdmin");
+  }
+}
+
+/**
+ * Delete any server (Admin only)
+ * @param {number} id - Server database ID
+ * @param {Object} options - Deletion options
+ * @param {boolean} options.restoreResources - Whether to restore resources to user (default: true)
+ * @returns {Promise<Object>} Deletion confirmation
+ */
+export async function deleteServerAdmin(id, options = {}) {
+  try {
+    validateRequired({ id }, ["id"]);
+
+    if (!/^\d+$/.test(id.toString())) {
+      throw new Error("Invalid server ID format");
+    }
+
+    const { restoreResources = true } = options;
+
+    const response = await api.delete(`/admin/servers/${id}`, {
+      data: { restoreResources },
+    });
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "deleteServerAdmin");
+  }
+}
+
+// ===========================================
+// POWER MANAGEMENT FUNCTIONS
+// ===========================================
+
+/**
+ * Send power action to server (Admin)
+ * @param {number} serverId - Pterodactyl server ID
+ * @param {string} action - Power action ('start', 'stop', 'restart', 'kill')
+ * @returns {Promise<Object>} Action result
+ */
+export async function sendServerPowerAction(serverId, action) {
+  try {
+    validateRequired({ serverId, action }, ["serverId", "action"]);
+
+    const validActions = ["start", "stop", "restart", "kill"];
+    if (!validActions.includes(action)) {
+      throw new Error(
+        `Invalid power action. Must be one of: ${validActions.join(", ")}`
+      );
+    }
+
+    const response = await api.post(`/admin/servers/${serverId}/power`, {
+      action,
+    });
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "sendServerPowerAction");
+  }
+}
+
+// ===========================================
+// UTILITY FUNCTIONS
+// ===========================================
+
+/**
+ * Get available eggs for server creation
+ * @returns {Promise<Object>} Available eggs data
+ */
+export async function getAvailableEggs() {
+  try {
+    const response = await api.get("/admin/eggs");
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "getAvailableEggs");
+  }
+}
+
+/**
+ * Get available nodes for server creation
+ * @returns {Promise<Object>} Available nodes data
+ */
+export async function getAvailableNodes() {
+  try {
+    const response = await api.get("/admin/nodes");
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "getAvailableNodes");
+  }
+}
+
+/**
+ * Get user's current resource usage
+ * @param {number} userId - User ID
+ * @returns {Promise<Object>} User resource data
+ */
+export async function getUserResourcesAdmin(userId) {
+  try {
+    validateRequired({ userId }, ["userId"]);
+
+    const response = await api.get(`/admin/users/${userId}/resources`);
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "getUserResources");
+  }
+}
+
+/**
+ * Bulk server operations
+ * @param {Array<number>} serverIds - Array of server IDs
+ * @param {string} operation - Operation to perform ('start', 'stop', 'restart', 'delete')
+ * @param {Object} options - Additional options
+ * @returns {Promise<Object>} Bulk operation results
+ */
+export async function bulkServerOperation(serverIds, operation, options = {}) {
+  try {
+    validateRequired({ serverIds, operation }, ["serverIds", "operation"]);
+
+    if (!Array.isArray(serverIds) || serverIds.length === 0) {
+      throw new Error("serverIds must be a non-empty array");
+    }
+
+    const validOperations = ["start", "stop", "restart", "delete"];
+    if (!validOperations.includes(operation)) {
+      throw new Error(
+        `Invalid operation. Must be one of: ${validOperations.join(", ")}`
+      );
+    }
+
+    const response = await api.post("/admin/servers/bulk", {
+      serverIds,
+      operation,
+      ...options,
+    });
+    return response.data;
+  } catch (error) {
+    handleAPIError(error, "bulkServerOperation");
+  }
+}
+
+// ===========================================
+// HELPER FUNCTIONS
+// ===========================================
+
+/**
+ * Validate server creation data
+ * @param {Object} serverData - Server data to validate
+ * @returns {Object} Validation result
+ */
+export function validateServerCreationData(serverData) {
+  const errors = [];
+  const warnings = [];
+
+  // Required fields
+  const requiredFields = [
+    "userId",
+    "name",
+    "ram",
+    "disk",
+    "cpu",
+    "nodeId",
+    "eggId",
+  ];
+  requiredFields.forEach((field) => {
+    if (!serverData[field]) {
+      errors.push(`${field} is required`);
+    }
+  });
+
+  // Resource limits
+  if (serverData.ram && serverData.ram < 128) {
+    warnings.push("RAM below 128MB may cause server instability");
+  }
+  if (serverData.ram && serverData.ram > 32768) {
+    warnings.push("RAM above 32GB may be excessive");
+  }
+  if (serverData.disk && serverData.disk < 512) {
+    warnings.push("Disk space below 512MB may be insufficient");
+  }
+  if (serverData.cpu && serverData.cpu > 400) {
+    warnings.push("CPU allocation above 400% may impact node performance");
+  }
+
+  // Name validation
+  if (serverData.name) {
+    if (serverData.name.length < 1 || serverData.name.length > 191) {
+      errors.push("Server name must be between 1 and 191 characters");
+    }
+    if (!/^[a-zA-Z0-9\s\-_.]+$/.test(serverData.name)) {
+      errors.push("Server name contains invalid characters");
+    }
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    warnings,
+  };
+}
+
+/**
+ * Format server data for display
+ * @param {Object} serverData - Raw server data
+ * @returns {Object} Formatted server data
+ */
+export function formatServerData(serverData) {
+  if (!serverData) return null;
+
+  return {
+    id: serverData.id,
+    name: serverData.panelData?.name || "Unknown",
+    status: serverData.panelData?.status || "unknown",
+    owner: serverData.user?.email || "Unknown",
+    resources: {
+      ram: `${serverData.panelData?.limits?.memory || 0}MB`,
+      disk: `${serverData.panelData?.limits?.disk || 0}MB`,
+      cpu: `${serverData.panelData?.limits?.cpu || 0}%`,
+    },
+    node: serverData.panelData?.node || "Unknown",
+    created: new Date(serverData.createdAt).toLocaleDateString(),
+    uuid: serverData.panelData?.uuid || null,
+  };
 }
 
 // ===========================================
@@ -923,8 +1297,16 @@ export async function getResourceById(id) {
 export async function createResource(resourceData = {}) {
   try {
     // Validate numeric values if provided
-    const numericFields = ['ram', 'disk', 'cpu', 'allocations', 'databases', 'slots', 'coins'];
-    
+    const numericFields = [
+      "ram",
+      "disk",
+      "cpu",
+      "allocations",
+      "databases",
+      "slots",
+      "coins",
+    ];
+
     for (const field of numericFields) {
       if (resourceData[field] !== undefined) {
         const value = parseInt(resourceData[field]);
@@ -951,8 +1333,16 @@ export async function createResource(resourceData = {}) {
 export async function updateResource(id, resourceData) {
   try {
     // Validate numeric values if provided
-    const numericFields = ['ram', 'disk', 'cpu', 'allocations', 'databases', 'slots', 'coins'];
-    
+    const numericFields = [
+      "ram",
+      "disk",
+      "cpu",
+      "allocations",
+      "databases",
+      "slots",
+      "coins",
+    ];
+
     for (const field of numericFields) {
       if (resourceData[field] !== undefined) {
         const value = parseInt(resourceData[field]);
@@ -979,8 +1369,16 @@ export async function updateResource(id, resourceData) {
 export async function patchResource(id, resourceData) {
   try {
     // Validate numeric values if provided
-    const numericFields = ['ram', 'disk', 'cpu', 'allocations', 'databases', 'slots', 'coins'];
-    
+    const numericFields = [
+      "ram",
+      "disk",
+      "cpu",
+      "allocations",
+      "databases",
+      "slots",
+      "coins",
+    ];
+
     for (const field of numericFields) {
       if (resourceData[field] !== undefined) {
         const value = parseInt(resourceData[field]);
@@ -1037,26 +1435,36 @@ export async function bulkCreateResources(resourcesArray) {
     }
 
     // Validate each resource object
-    const numericFields = ['ram', 'disk', 'cpu', 'allocations', 'databases', 'slots', 'coins'];
-    
+    const numericFields = [
+      "ram",
+      "disk",
+      "cpu",
+      "allocations",
+      "databases",
+      "slots",
+      "coins",
+    ];
+
     const validatedResources = resourcesArray.map((resourceData, index) => {
       const validated = { ...resourceData };
-      
+
       for (const field of numericFields) {
         if (validated[field] !== undefined) {
           const value = parseInt(validated[field]);
           if (isNaN(value) || value < 0) {
-            throw new Error(`Resource ${index + 1}: ${field} must be a non-negative number`);
+            throw new Error(
+              `Resource ${index + 1}: ${field} must be a non-negative number`
+            );
           }
           validated[field] = value;
         }
       }
-      
+
       return validated;
     });
 
     const response = await api.post("/api/resources/bulk", {
-      resources: validatedResources
+      resources: validatedResources,
     });
     return response.data;
   } catch (error) {
@@ -1087,7 +1495,10 @@ export async function createResourceFromTemplate(templateName, overrides = {}) {
   try {
     validateRequired({ templateName }, ["templateName"]);
 
-    const response = await api.post(`/api/resources/templates/${templateName}`, overrides);
+    const response = await api.post(
+      `/api/resources/templates/${templateName}`,
+      overrides
+    );
     return response.data;
   } catch (error) {
     handleAPIError(error, "createResourceFromTemplate");
@@ -1135,7 +1546,7 @@ export async function exportResources(params = {}) {
   try {
     const response = await api.get("/api/resources/export", {
       params,
-      responseType: 'blob'
+      responseType: "blob",
     });
     return response.data;
   } catch (error) {
@@ -1154,19 +1565,19 @@ export async function exportResources(params = {}) {
 export async function importResources(file, options = {}) {
   try {
     const formData = new FormData();
-    formData.append('file', file);
-    formData.append('options', JSON.stringify(options));
+    formData.append("file", file);
+    formData.append("options", JSON.stringify(options));
 
     const response = await api.post("/api/resources/import", formData, {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        "Content-Type": "multipart/form-data",
       },
     });
     return response.data;
   } catch (error) {
     handleAPIError(error, "importResources");
   }
-}// ===========================================
+} // ===========================================
 // ADMIN OPERATIONS
 // ===========================================
 

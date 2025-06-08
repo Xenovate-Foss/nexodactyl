@@ -28,6 +28,7 @@
     "react-dom": "^19.1.0",
     "react-pro-sidebar": "^1.1.0",
     "react-router-dom": "^7.6.0",
+    "socket.io-client": "^4.8.1",
     "tailwind-merge": "^3.3.0",
     "tailwindcss": "^4.1.6"
   },

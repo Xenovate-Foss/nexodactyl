@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { config, userData } from "@/components/api";
 import { useAuth } from "@/context/AuthProvider";
+import { Coins } from "lucide-react";
 
 // Function to generate Gravatar URL using Web Crypto API
 const getGravatarUrl = async (email, size = 80) => {
@@ -278,7 +279,10 @@ function SidebarMenu() {
                       {user?.username?.charAt(0)?.toUpperCase() || "U"}
                     </div>
                     <span className="ml-2 text-sm text-gray-300">
-                      {user?.username} {userDataState?.resources?.coins}
+                      {user?.username}{" "}
+                      <span className="flex gap-2 text-yellow-700">
+                        {userDataState?.resources?.coins} <Coins />
+                      </span>
                     </span>
                   </div>
                   <LogOut

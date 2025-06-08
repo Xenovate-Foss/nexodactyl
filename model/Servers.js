@@ -17,6 +17,10 @@ const Servers = db.define("servers", {
     allowNull: false,
     defaultValue: DataTypes.NOW,
   },
+  allocationId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
   owner: {
     type: DataTypes.INTEGER,
     reference: {

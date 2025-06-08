@@ -5,11 +5,12 @@ import Servers from "../model/Servers.js";
 import User from "../model/User.js";
 import Resources from "../model/resources.js";
 import Node from "../model/Node.js";
+import { Op } from "sequelize";
 
 const router = Router();
 
-// Constants for better maintainability
-//const POWER_ACTIONS = ["start", "stop", "restart", "kill"];
+// Constants
+const POWER_ACTIONS = ["start", "stop", "restart", "kill"];
 const DEFAULT_LIMITS = {
   swap: 0,
   io: 500,
@@ -41,11 +42,19 @@ panelAPI.interceptors.response.use(
   }
 );
 
+// Middleware to verify admin access
+const verifyAdmin = (req, res, next) => {
+  if (!req.user.root_admin) {
+    return res.status(403).json({
+      success: false,
+      error: "Access denied: Administrator privileges required",
+    });
+  }
+  next();
+};
+
 /**
  * Find egg by ID across all nests
- * @param {number|string} eggId - The egg ID to find
- * @returns {Promise<Object>} - The egg attributes
- * @throws {Error} - If egg is not found
  */
 async function findEggById(eggId) {
   try {
@@ -66,7 +75,7 @@ async function findEggById(eggId) {
         }
       } catch (error) {
         console.warn(`Failed to fetch eggs for nest ${nestId}:`, error.message);
-        continue; // Continue to next nest
+        continue;
       }
     }
 
@@ -78,10 +87,7 @@ async function findEggById(eggId) {
 }
 
 /**
- * Get the first unassigned allocation ID from a node
- * @param {number|string} nodeId - The ID of the node to query
- * @returns {Promise<number>} - The ID of the unassigned allocation
- * @throws {Error} - If no unassigned allocations are found or API fails
+ * Get unassigned allocation
  */
 async function getUnassignedAllocation(nodeId) {
   try {
@@ -98,9 +104,6 @@ async function getUnassignedAllocation(nodeId) {
       throw new Error(`No unassigned allocations available for node ${nodeId}`);
     }
 
-    console.log(
-      `Found unassigned allocation ${unassigned.attributes.id} for node ${nodeId}`
-    );
     return unassigned.attributes.id;
   } catch (error) {
     console.error(
@@ -113,10 +116,8 @@ async function getUnassignedAllocation(nodeId) {
 
 /**
  * Fetch server details from Pterodactyl panel
- * @param {number|string} serverId - The server ID
- * @returns {Promise<Object|null>} - Server data or null if failed
  */
-export async function fetchServerFromPanel(serverId) {
+async function fetchServerFromPanel(serverId) {
   try {
     const response = await panelAPI.get(
       `/api/application/servers/${serverId}?include=allocations,variables`
@@ -137,8 +138,6 @@ export async function fetchServerFromPanel(serverId) {
 
 /**
  * Fetch server resource usage
- * @param {number|string} serverId - The server ID
- * @returns {Promise<Object|null>} - Resource data or null if failed
  */
 async function fetchServerResources(serverId) {
   try {
@@ -156,82 +155,29 @@ async function fetchServerResources(serverId) {
 }
 
 /**
- * Get server limits from panel
- * @param {number|string} serverId - The server ID
- * @returns {Promise<Object|null>} - Server limits or null if failed
+ * Process server data for admin response
  */
-export async function getServerLimits(serverId) {
-  const serverData = await fetchServerFromPanel(serverId);
-  if (!serverData) return null;
-
-  return {
-    memory: serverData.attributes.limits.memory,
-    disk: serverData.attributes.limits.disk,
-    cpu: serverData.attributes.limits.cpu,
-    databases: serverData.attributes.feature_limits.databases,
-    allocations: serverData.attributes.feature_limits.allocations,
-  };
-}
-
-/**
- * Validate resource requirements against available resources
- * @param {Object} required - Required resources
- * @param {Object} available - Available resources
- * @returns {Array<string>} - Array of validation errors
- */
-function validateResourceAvailability(required, available) {
-  const errors = [];
-
-  if (required.ram > available.ram) {
-    errors.push(
-      `Insufficient RAM (need ${required.ram}MB, have ${available.ram}MB)`
-    );
-  }
-  if (required.disk > available.disk) {
-    errors.push(
-      `Insufficient disk space (need ${required.disk}MB, have ${available.disk}MB)`
-    );
-  }
-  if (required.cpu > available.cpu) {
-    errors.push(
-      `Insufficient CPU (need ${required.cpu}%, have ${available.cpu}%)`
-    );
-  }
-  if (required.allocations > available.allocations) {
-    errors.push(
-      `Insufficient allocations (need ${required.allocations}, have ${available.allocations})`
-    );
-  }
-  if (required.databases > available.databases) {
-    errors.push(
-      `Insufficient databases (need ${required.databases}, have ${available.databases})`
-    );
-  }
-  if (required.slots > available.slots) {
-    errors.push(
-      `Insufficient server slots (need ${required.slots}, have ${available.slots})`
-    );
-  }
-
-  return errors;
-}
-
-/**
- * Process server data for response
- * @param {Object} dbServer - Database server record
- * @param {Object} serverData - Panel server data
- * @param {Object} resourceData - Resource usage data
- * @returns {Object} - Processed server object
- */
-function processServerData(dbServer, serverData, resourceData) {
+function processAdminServerData(dbServer, serverData, resourceData, userData) {
   return {
     // Database info
     id: dbServer.id,
     owner: dbServer.owner,
     serverId: dbServer.serverId,
-    renewal: dbServer.renewal,
+    renewDate: dbServer.renewDate, // Fixed: was 'renewal', should be 'renewDate'
+    createdAt: dbServer.createdAt,
+    updatedAt: dbServer.updatedAt,
 
-    // Panel info (if available)
+    // User info
+    user: userData
+      ? {
+          id: userData.id,
+          email: userData.email,
+          username: userData.username,
+          resourcesId: userData.resourcesId,
+        }
+      : null,
+
+    // Panel info
     panelData: serverData
       ? {
           uuid: serverData.attributes.uuid,
@@ -239,7 +185,8 @@ function processServerData(dbServer, serverData, resourceData) {
           description: serverData.attributes.description,
           status: serverData.attributes.status,
           limits: serverData.attributes.limits,
-          feature_limits: serverData.attributes.feature_limits, // This was missing in some responses
+          feature_limits: serverData.attributes.feature_limits,
+          node: serverData.attributes.node,
           relationships: {
             allocations:
               serverData.attributes.relationships?.allocations?.data || [],
@@ -251,7 +198,7 @@ function processServerData(dbServer, serverData, resourceData) {
         }
       : null,
 
-    // Resource usage (if available)
+    // Resource usage
     resources: resourceData
       ? {
           current_state: resourceData.attributes.current_state,
@@ -262,33 +209,58 @@ function processServerData(dbServer, serverData, resourceData) {
   };
 }
 
-// GET /servers - Fetch all user's servers
-router.get("/servers", verifyToken, async (req, res) => {
+// GET /admin/servers - Get all servers with pagination and filtering
+router.get("/admin/servers", verifyToken, verifyAdmin, async (req, res) => {
   try {
-    const { resourcesId, pteroId } = req.user;
+    const {
+      page = 1,
+      limit = 20,
+      search,
+      status,
+      userId,
+      nodeId,
+      sortBy = "createdAt",
+      sortOrder = "DESC",
+    } = req.query;
 
-    if (!pteroId) {
-      return res.status(401).json({
-        success: false,
-        error: "User not authorized for server access",
-      });
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+    const whereClause = {};
+    const includeClause = [
+      {
+        model: User,
+        as: "userInfo",
+        attributes: ["id", "email", "username", "resourcesId"],
+        required: false, // LEFT JOIN to include servers even if user doesn't exist
+      },
+    ];
+
+    // Apply filters
+    if (userId) {
+      whereClause.owner = userId;
     }
 
-    // Get servers from database
-    const dbServers = await Servers.findAll({
-      where: { owner: pteroId },
-      order: [["createdAt", "DESC"]], // Most recent first
+    if (search) {
+      // Search in server names via panel API would be complex
+      // For now, search by server ID or user email
+      if (/^\d+$/.test(search)) {
+        whereClause.serverId = search;
+      } else {
+        includeClause[0].where = {
+          email: { [Op.iLike]: `%${search}%` },
+        };
+      }
+    }
+
+    // Get servers from database with pagination
+    const { count, rows: dbServers } = await Servers.findAndCountAll({
+      where: whereClause,
+      include: includeClause,
+      limit: parseInt(limit),
+      offset,
+      order: [[sortBy, sortOrder.toUpperCase()]],
     });
 
-    if (!dbServers || dbServers.length === 0) {
-      return res.json({
-        success: true,
-        servers: [],
-        message: "No servers found",
-      });
-    }
-
-    // Fetch detailed information from Pterodactyl panel for each server
+    // Fetch detailed information from Pterodactyl panel
     const serversWithDetails = await Promise.allSettled(
       dbServers.map(async (dbServer) => {
         const [serverData, resourceData] = await Promise.allSettled([
@@ -296,21 +268,32 @@ router.get("/servers", verifyToken, async (req, res) => {
           fetchServerResources(dbServer.serverId),
         ]);
 
-        return processServerData(
+        return processAdminServerData(
           dbServer,
           serverData.status === "fulfilled" ? serverData.value : null,
-          resourceData.status === "fulfilled" ? resourceData.value : null
+          resourceData.status === "fulfilled" ? resourceData.value : null,
+          dbServer.userInfo
         );
       })
     );
 
-    // Process results and separate successful from failed fetches
+    // Process results
     const servers = [];
     const errors = [];
 
     serversWithDetails.forEach((result, index) => {
       if (result.status === "fulfilled") {
-        servers.push(result.value);
+        const server = result.value;
+
+        // Apply panel-based filters
+        if (status && server.panelData?.status !== status) {
+          return;
+        }
+        if (nodeId && server.panelData?.node !== parseInt(nodeId)) {
+          return;
+        }
+
+        servers.push(server);
       } else {
         errors.push({
           serverId: dbServers[index].serverId,
@@ -319,40 +302,34 @@ router.get("/servers", verifyToken, async (req, res) => {
       }
     });
 
-    return res.json({
+    res.json({
       success: true,
       servers,
-      pteroId,
-      totalServers: servers.length,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: count,
+        pages: Math.ceil(count / parseInt(limit)),
+      },
       ...(errors.length > 0 && {
         warnings: `Failed to fetch panel data for ${errors.length} server(s)`,
         failedServers: errors,
       }),
     });
   } catch (error) {
-    console.error("Error in /servers route:", error);
+    console.error("Error in admin servers route:", error);
     res.status(500).json({
       success: false,
       error: "Failed to fetch servers",
-      message: "An internal error occurred while retrieving your servers",
     });
   }
 });
 
-// GET /servers/:id - Fetch specific server
-router.get("/servers/:id", verifyToken, async (req, res) => {
+// GET /admin/servers/:id - Get specific server details
+router.get("/admin/servers/:id", verifyToken, verifyAdmin, async (req, res) => {
   try {
-    const { resourcesId, pteroId } = req.user;
     const { id: serverId } = req.params;
 
-    if (!pteroId) {
-      return res.status(401).json({
-        success: false,
-        error: "User not authorized for server access",
-      });
-    }
-
-    // Validate serverId is numeric
     if (!/^\d+$/.test(serverId)) {
       return res.status(400).json({
         success: false,
@@ -360,18 +337,37 @@ router.get("/servers/:id", verifyToken, async (req, res) => {
       });
     }
 
-    // Get server from database
     const dbServer = await Servers.findOne({
-      where: {
-        id: serverId,
-        owner: pteroId,
-      },
+      where: { id: serverId },
+      include: [
+        {
+          model: User,
+          as: "userInfo",
+          attributes: ["id", "email", "username", "resourcesId"],
+          required: false, // LEFT JOIN
+          include: [
+            {
+              model: Resources,
+              as: "resources",
+              attributes: [
+                "ram",
+                "disk",
+                "cpu",
+                "databases",
+                "allocations",
+                "slots",
+              ],
+              required: false, // LEFT JOIN
+            },
+          ],
+        },
+      ],
     });
 
     if (!dbServer) {
       return res.status(404).json({
         success: false,
-        error: "Server not found or you don't have permission to access it",
+        error: "Server not found",
       });
     }
 
@@ -381,18 +377,24 @@ router.get("/servers/:id", verifyToken, async (req, res) => {
       fetchServerResources(dbServer.serverId),
     ]);
 
-    const serverDetails = processServerData(
+    const serverDetails = processAdminServerData(
       dbServer,
       serverData.status === "fulfilled" ? serverData.value : null,
-      resourceData.status === "fulfilled" ? resourceData.value : null
+      resourceData.status === "fulfilled" ? resourceData.value : null,
+      dbServer.userInfo
     );
 
-    return res.json({
+    // Add user resources info
+    if (dbServer.userInfo?.resources) {
+      serverDetails.user.resources = dbServer.userInfo.resources;
+    }
+
+    res.json({
       success: true,
       server: serverDetails,
     });
   } catch (error) {
-    console.error("Error in /servers/:id route:", error);
+    console.error("Error in admin server details route:", error);
     res.status(500).json({
       success: false,
       error: "Failed to fetch server details",
@@ -400,11 +402,11 @@ router.get("/servers/:id", verifyToken, async (req, res) => {
   }
 });
 
-// POST /servers - Create new server
-router.post("/servers", verifyToken, async (req, res) => {
+// POST /admin/servers - Create server for any user
+router.post("/admin/servers", verifyToken, verifyAdmin, async (req, res) => {
   try {
-    const { resourcesId, pteroId } = req.user;
     const {
+      userId,
       ram,
       disk,
       cpu,
@@ -414,24 +416,52 @@ router.post("/servers", verifyToken, async (req, res) => {
       eggId,
       name,
       description = "",
+      skipResourceCheck = false,
     } = req.body;
 
-    console.log("Server creation request:", {
-      user: pteroId,
+    console.log("Admin server creation request:", {
+      admin: req.user.email,
+      userId,
       name,
       ram,
       disk,
       cpu,
       nodeId,
       eggId,
+      skipResourceCheck,
     });
 
     // Input validation
-    if (!name || !ram || !disk || !cpu || !nodeId || !eggId) {
+    if (!userId || !name || !ram || !disk || !cpu || !nodeId || !eggId) {
       return res.status(400).json({
         success: false,
         error: "Missing required fields",
-        required: ["name", "ram", "disk", "cpu", "nodeId", "eggId"],
+        required: ["userId", "name", "ram", "disk", "cpu", "nodeId", "eggId"],
+      });
+    }
+
+    // Validate user exists
+    const targetUser = await User.findByPk(userId, {
+      include: [
+        {
+          model: Resources,
+          as: "resources",
+          required: false, // LEFT JOIN
+        },
+      ],
+    });
+
+    if (!targetUser) {
+      return res.status(404).json({
+        success: false,
+        error: "Target user not found",
+      });
+    }
+
+    if (!targetUser.pteroId) {
+      return res.status(400).json({
+        success: false,
+        error: "Target user does not have Pterodactyl access",
       });
     }
 
@@ -446,43 +476,62 @@ router.post("/servers", verifyToken, async (req, res) => {
       }
     }
 
-    // Validate name length and characters
-    if (name.length < 1 || name.length > 191) {
-      return res.status(400).json({
-        success: false,
-        error: "Server name must be between 1 and 191 characters",
-      });
+    // Check resource availability (unless skipped)
+    if (!skipResourceCheck && targetUser.resources) {
+      const required = {
+        ram: parseInt(ram),
+        disk: parseInt(disk),
+        cpu: parseInt(cpu),
+        allocations: parseInt(allocations),
+        databases: parseInt(databases),
+        slots: 1,
+      };
+
+      const available = targetUser.resources;
+      const errors = [];
+
+      if (required.ram > available.ram) {
+        errors.push(
+          `Insufficient RAM (need ${required.ram}MB, have ${available.ram}MB)`
+        );
+      }
+      if (required.disk > available.disk) {
+        errors.push(
+          `Insufficient disk space (need ${required.disk}MB, have ${available.disk}MB)`
+        );
+      }
+      if (required.cpu > available.cpu) {
+        errors.push(
+          `Insufficient CPU (need ${required.cpu}%, have ${available.cpu}%)`
+        );
+      }
+      if (required.allocations > available.allocations) {
+        errors.push(
+          `Insufficient allocations (need ${required.allocations}, have ${available.allocations})`
+        );
+      }
+      if (required.databases > available.databases) {
+        errors.push(
+          `Insufficient databases (need ${required.databases}, have ${available.databases})`
+        );
+      }
+      if (required.slots > available.slots) {
+        errors.push(
+          `Insufficient server slots (need ${required.slots}, have ${available.slots})`
+        );
+      }
+
+      if (errors.length > 0) {
+        return res.status(400).json({
+          success: false,
+          error: "Insufficient resources",
+          details: errors,
+          note: "Use skipResourceCheck=true to override resource limits",
+        });
+      }
     }
 
-    // Find user's resources
-    const resources = await Resources.findByPk(resourcesId);
-    if (!resources) {
-      return res.status(404).json({
-        success: false,
-        error: "User resources not found",
-      });
-    }
-
-    // Validate resource availability
-    const required = {
-      ram: parseInt(ram),
-      disk: parseInt(disk),
-      cpu: parseInt(cpu),
-      allocations: parseInt(allocations),
-      databases: parseInt(databases),
-      slots: 1,
-    };
-
-    const validationErrors = validateResourceAvailability(required, resources);
-    if (validationErrors.length > 0) {
-      return res.status(400).json({
-        success: false,
-        error: "Insufficient resources",
-        details: validationErrors,
-      });
-    }
-
-    // Validate node exists and is available
+    // Validate node exists
     const nodeExists = await Node.findOne({ where: { nodeId } });
     if (!nodeExists) {
       return res.status(400).json({
@@ -491,13 +540,13 @@ router.post("/servers", verifyToken, async (req, res) => {
       });
     }
 
-    // Get egg info and allocation concurrently
+    // Get egg info and allocation
     const [eggInfo, allocId] = await Promise.all([
       findEggById(eggId),
       getUnassignedAllocation(nodeId),
     ]);
 
-    // Build environment variables from egg configuration
+    // Build environment variables
     const environment = {};
     if (eggInfo.relationships?.variables?.data) {
       eggInfo.relationships.variables.data.forEach((variable) => {
@@ -510,7 +559,7 @@ router.post("/servers", verifyToken, async (req, res) => {
     const serverData = {
       name: name.trim(),
       description: description.trim(),
-      user: parseInt(pteroId),
+      user: parseInt(targetUser.pteroId),
       egg: parseInt(eggId),
       docker_image: eggInfo.docker_image,
       startup: eggInfo.startup,
@@ -532,11 +581,6 @@ router.post("/servers", verifyToken, async (req, res) => {
       },
     };
 
-    console.log(
-      "Creating server with data:",
-      JSON.stringify(serverData, null, 2)
-    );
-
     // Create server via Pterodactyl API
     const pterodactylResponse = await panelAPI.post(
       "/api/application/servers",
@@ -544,22 +588,25 @@ router.post("/servers", verifyToken, async (req, res) => {
     );
 
     const createdServer = pterodactylResponse.data;
-    console.log("Server created successfully:", createdServer.attributes.id);
 
-    // Deduct resources after successful server creation
-    resources.ram -= required.ram;
-    resources.disk -= required.disk;
-    resources.cpu -= required.cpu;
-    resources.allocations -= required.allocations;
-    resources.databases -= required.databases;
-    resources.slots -= 1;
-    await resources.save();
+    // Deduct resources if not skipped and user has resources
+    if (!skipResourceCheck && targetUser.resources) {
+      const resources = targetUser.resources;
+      resources.ram -= parseInt(ram);
+      resources.disk -= parseInt(disk);
+      resources.cpu -= parseInt(cpu);
+      resources.allocations -= parseInt(allocations);
+      resources.databases -= parseInt(databases);
+      resources.slots -= 1;
+      await resources.save();
+    }
 
     // Store server info in database
     const serverRecord = await Servers.create({
-      owner: pteroId,
+      owner: targetUser.pteroId,
       allocationId: allocId,
       serverId: createdServer.attributes.id,
+      renewDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
     });
 
     res.status(201).json({
@@ -572,12 +619,16 @@ router.post("/servers", verifyToken, async (req, res) => {
         identifier: createdServer.attributes.identifier,
         uuid: createdServer.attributes.uuid,
         status: createdServer.attributes.status,
+        owner: {
+          id: targetUser.id,
+          email: targetUser.email,
+          username: targetUser.username,
+        },
       },
     });
   } catch (error) {
     console.error("Error creating server:", error);
 
-    // Handle specific Pterodactyl API errors
     if (error.response?.status === 422) {
       return res.status(400).json({
         success: false,
@@ -586,32 +637,30 @@ router.post("/servers", verifyToken, async (req, res) => {
       });
     }
 
-    if (error.response?.status === 400) {
-      return res.status(400).json({
-        success: false,
-        error: "Bad request to Pterodactyl panel",
-        message: error.response.data?.message || "Invalid request parameters",
-      });
-    }
-
     res.status(500).json({
       success: false,
       error: "Internal server error while creating server",
-      message:
-        "Please try again later or contact support if the issue persists",
     });
   }
 });
 
-// PUT /servers/:id - Update server (FIXED)
-router.put("/servers/:id", verifyToken, async (req, res) => {
+// PUT /admin/servers/:id - Update any server
+router.put("/admin/servers/:id", verifyToken, verifyAdmin, async (req, res) => {
   try {
-    const { resourcesId, pteroId } = req.user;
     const { id: serverId } = req.params;
-    const { name, description, ram, disk, cpu, databases, allocations } =
-      req.body;
+    const {
+      name,
+      description,
+      ram,
+      disk,
+      cpu,
+      databases,
+      allocations,
+      skipResourceCheck = false,
+    } = req.body;
 
-    console.log("Server update request:", {
+    console.log("Admin server update request:", {
+      admin: req.user.email,
       serverId,
       name,
       description,
@@ -620,9 +669,9 @@ router.put("/servers/:id", verifyToken, async (req, res) => {
       cpu,
       databases,
       allocations,
+      skipResourceCheck,
     });
 
-    // Validate serverId
     if (!/^\d+$/.test(serverId)) {
       return res.status(400).json({
         success: false,
@@ -632,26 +681,46 @@ router.put("/servers/:id", verifyToken, async (req, res) => {
 
     // Find server in database
     const dbServer = await Servers.findOne({
-      where: { id: serverId, owner: pteroId },
+      where: { id: serverId },
+      include: [
+        {
+          model: User,
+          as: "userInfo",
+          required: false, // LEFT JOIN
+          include: [
+            {
+              model: Resources,
+              as: "resources",
+              required: false, // LEFT JOIN
+            },
+          ],
+        },
+      ],
     });
 
     if (!dbServer) {
       return res.status(404).json({
         success: false,
-        error: "Server not found or you don't have permission to modify it",
+        error: "Server not found",
       });
     }
 
     // Get current server limits
-    const currentLimits = await getServerLimits(dbServer.serverId);
-    if (!currentLimits) {
+    const currentServerData = await fetchServerFromPanel(dbServer.serverId);
+    if (!currentServerData) {
       return res.status(500).json({
         success: false,
         error: "Failed to fetch current server configuration",
       });
     }
 
-    console.log("Current server limits:", currentLimits);
+    const currentLimits = {
+      memory: currentServerData.attributes.limits.memory,
+      disk: currentServerData.attributes.limits.disk,
+      cpu: currentServerData.attributes.limits.cpu,
+      databases: currentServerData.attributes.feature_limits.databases,
+      allocations: currentServerData.attributes.feature_limits.allocations,
+    };
 
     // Validate numeric inputs if provided
     const numericFields = { ram, disk, cpu, databases, allocations };
@@ -680,8 +749,6 @@ router.put("/servers/:id", verifyToken, async (req, res) => {
           : currentLimits.allocations,
     };
 
-    console.log("New limits:", newLimits);
-
     // Calculate resource differences
     const differences = {
       ram: newLimits.memory - currentLimits.memory,
@@ -691,9 +758,6 @@ router.put("/servers/:id", verifyToken, async (req, res) => {
       allocations: newLimits.allocations - currentLimits.allocations,
     };
 
-    console.log("Resource differences:", differences);
-
-    // If resource changes are requested, validate availability
     const hasResourceChanges =
       ram !== undefined ||
       disk !== undefined ||
@@ -701,61 +765,71 @@ router.put("/servers/:id", verifyToken, async (req, res) => {
       databases !== undefined ||
       allocations !== undefined;
 
-    if (hasResourceChanges) {
-      const resources = await Resources.findByPk(resourcesId);
-      if (!resources) {
-        return res.status(404).json({
-          success: false,
-          error: "User resources not found",
-        });
-      }
-
-      // Only validate increases (positive differences)
+    // Check resource availability if not skipped
+    if (
+      hasResourceChanges &&
+      !skipResourceCheck &&
+      dbServer.userInfo?.resources
+    ) {
+      const resources = dbServer.userInfo.resources;
       const required = {
         ram: Math.max(0, differences.ram),
         disk: Math.max(0, differences.disk),
         cpu: Math.max(0, differences.cpu),
         databases: Math.max(0, differences.databases),
         allocations: Math.max(0, differences.allocations),
-        slots: 0,
       };
 
-      console.log("Required additional resources:", required);
+      const errors = [];
+      if (required.ram > resources.ram) {
+        errors.push(
+          `Insufficient RAM (need ${required.ram}MB, have ${resources.ram}MB)`
+        );
+      }
+      if (required.disk > resources.disk) {
+        errors.push(
+          `Insufficient disk space (need ${required.disk}MB, have ${resources.disk}MB)`
+        );
+      }
+      if (required.cpu > resources.cpu) {
+        errors.push(
+          `Insufficient CPU (need ${required.cpu}%, have ${resources.cpu}%)`
+        );
+      }
+      if (required.databases > resources.databases) {
+        errors.push(
+          `Insufficient databases (need ${required.databases}, have ${resources.databases})`
+        );
+      }
+      if (required.allocations > resources.allocations) {
+        errors.push(
+          `Insufficient allocations (need ${required.allocations}, have ${resources.allocations})`
+        );
+      }
 
-      const validationErrors = validateResourceAvailability(
-        required,
-        resources
-      );
-      if (validationErrors.length > 0) {
+      if (errors.length > 0) {
         return res.status(400).json({
           success: false,
           error: "Insufficient resources for upgrade",
-          details: validationErrors,
+          details: errors,
+          note: "Use skipResourceCheck=true to override resource limits",
         });
       }
 
-      // Update user resources (subtract the differences)
+      // Update user resources
       resources.ram -= differences.ram;
       resources.disk -= differences.disk;
       resources.cpu -= differences.cpu;
       resources.databases -= differences.databases;
       resources.allocations -= differences.allocations;
       await resources.save();
-
-      console.log("Updated user resources");
     }
 
     // Prepare update requests
     const updatePromises = [];
 
-    // Update build configuration (limits)
-    if (
-      ram !== undefined ||
-      disk !== undefined ||
-      cpu !== undefined ||
-      databases !== undefined ||
-      allocations !== undefined
-    ) {
+    // Update build configuration
+    if (hasResourceChanges) {
       const buildUpdate = {
         allocation: dbServer.allocationId,
         limits: {
@@ -772,11 +846,6 @@ router.put("/servers/:id", verifyToken, async (req, res) => {
         },
       };
 
-      console.log(
-        "Sending build update:",
-        JSON.stringify(buildUpdate, null, 2)
-      );
-
       updatePromises.push(
         panelAPI.patch(
           `/api/application/servers/${dbServer.serverId}/build`,
@@ -785,9 +854,8 @@ router.put("/servers/:id", verifyToken, async (req, res) => {
       );
     }
 
-    // Update details (name/description)
+    // Update details
     if (name !== undefined || description !== undefined) {
-      // Validate name if provided
       if (name !== undefined && (name.length < 1 || name.length > 191)) {
         return res.status(400).json({
           success: false,
@@ -800,8 +868,6 @@ router.put("/servers/:id", verifyToken, async (req, res) => {
       if (description !== undefined)
         detailsUpdate.description = description.trim();
 
-      console.log("Sending details update:", detailsUpdate);
-
       updatePromises.push(
         panelAPI.patch(
           `/api/application/servers/${dbServer.serverId}/details`,
@@ -810,33 +876,32 @@ router.put("/servers/:id", verifyToken, async (req, res) => {
       );
     }
 
-    // Execute all updates
+    // Execute updates
     if (updatePromises.length > 0) {
       const results = await Promise.allSettled(updatePromises);
-
-      // Check for any failures
       const failures = results.filter((result) => result.status === "rejected");
+
       if (failures.length > 0) {
         console.error("Update failures:", failures);
-        // If we updated resources but API failed, we need to rollback
-        if (hasResourceChanges) {
-          const resources = await Resources.findByPk(resourcesId);
-          if (resources) {
-            resources.ram += differences.ram;
-            resources.disk += differences.disk;
-            resources.cpu += differences.cpu;
-            resources.databases += differences.databases;
-            resources.allocations += differences.allocations;
-            await resources.save();
-            console.log("Rolled back resource changes due to API failure");
-          }
+
+        // Rollback resource changes if needed
+        if (
+          hasResourceChanges &&
+          !skipResourceCheck &&
+          dbServer.userInfo?.resources
+        ) {
+          const resources = dbServer.userInfo.resources;
+          resources.ram += differences.ram;
+          resources.disk += differences.disk;
+          resources.cpu += differences.cpu;
+          resources.databases += differences.databases;
+          resources.allocations += differences.allocations;
+          await resources.save();
         }
 
         throw failures[0].reason;
       }
     }
-
-    console.log("Server updated successfully");
 
     res.json({
       success: true,
@@ -853,68 +918,87 @@ router.put("/servers/:id", verifyToken, async (req, res) => {
       });
     }
 
-    if (error.response?.status === 404) {
-      return res.status(404).json({
-        success: false,
-        error: "Server not found in panel",
-      });
-    }
-
     res.status(500).json({
       success: false,
       error: "Failed to update server",
-      message: error.message || "An internal error occurred",
     });
   }
 });
 
-// DELETE /servers/:id - Delete server
-router.delete("/servers/:id", verifyToken, async (req, res) => {
-  try {
-    const { resourcesId, pteroId } = req.user;
-    const { id: serverId } = req.params;
-
-    // Validate serverId
-    if (!/^\d+$/.test(serverId)) {
-      return res.status(400).json({
-        success: false,
-        error: "Invalid server ID format",
-      });
-    }
-
-    // Find server in database
-    const dbServer = await Servers.findOne({
-      where: { id: serverId, owner: pteroId },
-    });
-
-    if (!dbServer) {
-      return res.status(404).json({
-        success: false,
-        error: "Server not found or you don't have permission to delete it",
-      });
-    }
-
-    // Get current server limits to restore resources
-    const currentLimits = await getServerLimits(dbServer.serverId);
-
+// DELETE /admin/servers/:id - Delete any server
+router.delete(
+  "/admin/servers/:id",
+  verifyToken,
+  verifyAdmin,
+  async (req, res) => {
     try {
-      // Delete server from Pterodactyl panel
-      await panelAPI.delete(`/api/application/servers/${dbServer.serverId}`);
-      console.log(`Server ${dbServer.serverId} deleted from panel`);
-    } catch (error) {
-      if (error.response?.status === 404) {
-        console.warn(
-          `Server ${dbServer.serverId} was already deleted from panel`
-        );
-      } else {
-        throw error; // Re-throw if it's not a 404
-      }
-    }
+      const { id: serverId } = req.params;
+      const { restoreResources = true } = req.body;
 
-    // Restore resources to user if we successfully got the limits
-    if (currentLimits && resourcesId) {
-      const resources = await Resources.findByPk(resourcesId);
-      if (resources) {
+      if (!/^\d+$/.test(serverId)) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid server ID format",
+        });
+      }
+
+      // Find server in database
+      const dbServer = await Servers.findOne({
+        where: { id: serverId },
+        include: [
+          {
+            model: User,
+            as: "userInfo",
+            required: false, // LEFT JOIN
+            include: [
+              {
+                model: Resources,
+                as: "resources",
+                required: false, // LEFT JOIN
+              },
+            ],
+          },
+        ],
+      });
+
+      if (!dbServer) {
+        return res.status(404).json({
+          success: false,
+          error: "Server not found",
+        });
+      }
+
+      // Get current server limits to restore resources
+      const currentServerData = await fetchServerFromPanel(dbServer.serverId);
+      let currentLimits = null;
+
+      if (currentServerData) {
+        currentLimits = {
+          memory: currentServerData.attributes.limits.memory,
+          disk: currentServerData.attributes.limits.disk,
+          cpu: currentServerData.attributes.limits.cpu,
+          databases: currentServerData.attributes.feature_limits.databases,
+          allocations: currentServerData.attributes.feature_limits.allocations,
+        };
+      }
+
+      try {
+        // Delete server from Pterodactyl panel
+        await panelAPI.delete(`/api/application/servers/${dbServer.serverId}`);
+        console.log(`Server ${dbServer.serverId} deleted from panel`);
+      } catch (error) {
+        if (error.response?.status === 404) {
+          console.warn(
+            `Server ${dbServer.serverId} was already deleted from panel`
+          );
+        } else {
+          throw error;
+        }
+      }
+
+      // Restore resources if requested and possible
+      if (restoreResources && currentLimits && dbServer.userInfo?.resources) {
+        const resources = dbServer.userInfo.resources;
         resources.ram += currentLimits.memory;
         resources.disk += currentLimits.disk;
         resources.cpu += currentLimits.cpu;
@@ -922,39 +1006,37 @@ router.delete("/servers/:id", verifyToken, async (req, res) => {
         resources.allocations += currentLimits.allocations;
         resources.slots += 1;
         await resources.save();
-        console.log(`Resources restored for user ${pteroId}`);
+        console.log(`Resources restored for user ${dbServer.userInfo.email}`);
       }
-    }
 
-    // Remove server from database
-    await dbServer.destroy();
+      // Remove server from database
+      await dbServer.destroy();
 
-    res.json({
-      success: true,
-      message: "Server deleted successfully",
-    });
-  } catch (error) {
-    console.error("Error deleting server:", error);
-
-    // If there was an error but the server doesn't exist on panel, clean up database
-    if (error.response?.status === 404) {
-      await Servers.destroy({
-        where: { id: serverId, owner: pteroId },
-      });
-
-      return res.json({
+      res.json({
         success: true,
-        message: "Server deleted successfully (was already removed from panel)",
+        message: "Server deleted successfully",
+        restoredResources:
+          restoreResources && currentLimits && dbServer.userInfo?.resources,
+      });
+    } catch (error) {
+      console.error("Error deleting server:", error);
+
+      if (error.response?.status === 404) {
+        // If server doesn't exist in panel, still remove from database
+        await Servers.destroy({ where: { id: serverId } });
+        return res.json({
+          success: true,
+          message:
+            "Server deleted successfully (was already removed from panel)",
+        });
+      }
+
+      res.status(500).json({
+        success: false,
+        error: "Failed to delete server",
       });
     }
-
-    res.status(500).json({
-      success: false,
-      error: "Failed to delete server",
-    });
   }
-});
-
-// POST /servers/:id/power - Control server power state
+);
 
 export default router;

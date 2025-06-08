@@ -40,6 +40,8 @@ import nodeCrudRoute from "./control/node.js";
 import eggCrudRoute from "./control/egg.js";
 import userCrudRoute from "./control/user.js";
 import resourcesCrud from "./control/resources.js";
+import adminServer from "./control/adminServer.js";
+import purger from "./control/purger.js";
 
 // app conf
 const app = express();
@@ -69,10 +71,13 @@ app.use("/api/nodes", nodeCrudRoute);
 app.use("/api/eggs", eggCrudRoute);
 app.use("/api/resources", resourcesCrud);
 app.use("/api", userCrudRoute);
+app.use("/api/", adminServer);
+app.use("/api/admin", purger);
 
 // panel connection test
 if (!process.env.panel_url || !process.env.panel_key) {
   console.error("Please provide the panel details");
+  process.exit(1);
 } else {
   console.log("checking panel connection, url ", process.env.panel_url);
   (async () => {
@@ -91,6 +96,7 @@ if (!process.env.panel_url || !process.env.panel_key) {
       console.log("Panel connection successful");
     } catch (error) {
       console.error("Panel connection failed:", error.message);
+      process.exit(1);
     }
   })();
 }

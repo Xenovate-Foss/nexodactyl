@@ -52,6 +52,7 @@ const createToken = (user, pteroUser = null) => {
     userId: user.id,
     email: user.email,
     pteroId: user.ptero_id,
+    resourcesId: user.resourcesId,
   };
 
   if (pteroUser?.attributes?.root_admin !== undefined) {

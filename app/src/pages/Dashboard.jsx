@@ -116,16 +116,16 @@ const Dashboard = () => {
       )}
 
       {/* Main Content */}
-      {additionalData ? (
+      {!!additionalData ? (
         <div className="grid gap-6">
           {/* Resource Information */}
-          {additionalData.resources && (
+          {!!additionalData.resources && (
             <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
               <h3 className="text-xl font-semibold mb-4">
                 Available Resources
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {additionalData.resources.ram && (
+                {!!additionalData.resources.ram && (
                   <div className="bg-gray-700 p-4 rounded-lg">
                     <h4 className="text-sm font-medium text-gray-300 mb-1 flex gap-2">
                       {" "}
@@ -136,7 +136,7 @@ const Dashboard = () => {
                     </p>
                   </div>
                 )}
-                {additionalData.resources.cpu && (
+                {!!additionalData.resources.cpu && (
                   <div className="bg-gray-700 p-4 rounded-lg">
                     <h4 className="text-sm font-medium text-gray-300 mb-1 flex gap-2">
                       {" "}
@@ -148,7 +148,7 @@ const Dashboard = () => {
                     </p>
                   </div>
                 )}
-                {additionalData.resources.disk && (
+                {!!additionalData.resources.disk && (
                   <div className="bg-gray-700 p-4 rounded-lg">
                     <h4 className="text-sm font-medium text-gray-300 mb-1 flex gap-2">
                       <HardDrive />
