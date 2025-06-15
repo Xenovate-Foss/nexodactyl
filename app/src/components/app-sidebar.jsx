@@ -122,7 +122,7 @@ function SidebarMenu() {
   const menuItems = [
     { name: "Dashboard", icon: <Home size={20} />, link: "/" },
     { name: "Servers", icon: <Server size={20} />, link: "/servers" },
-    { name: "Shop", icon: <ShoppingCart size={20} />, link: "/shop" },
+    { name: "Store", icon: <ShoppingCart size={20} />, link: "/store" },
     { name: "Credentials", icon: <User size={20} />, link: "/credentials" },
     { name: "Settings", icon: <Settings size={20} />, link: "/settings" },
   ];

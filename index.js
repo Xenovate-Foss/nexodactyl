@@ -42,6 +42,7 @@ import userCrudRoute from "./control/user.js";
 import resourcesCrud from "./control/resources.js";
 import adminServer from "./control/adminServer.js";
 import purger from "./control/purger.js";
+import store from "./control/store.js";
 
 // app conf
 const app = express();
@@ -73,6 +74,7 @@ app.use("/api/resources", resourcesCrud);
 app.use("/api", userCrudRoute);
 app.use("/api/", adminServer);
 app.use("/api/admin", purger);
+app.use("/api", store);
 
 // panel connection test
 if (!process.env.panel_url || !process.env.panel_key) {

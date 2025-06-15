@@ -160,7 +160,7 @@ const pteroService = new PterodactylService();
 
 // Middleware
 export const verifyToken = (req, res, next) => {
-  const token = req.cookies.auth_token;
+  const token = req?.cookies.auth_token;
 
   if (!token) {
     return res.status(401).json({
@@ -174,7 +174,7 @@ export const verifyToken = (req, res, next) => {
     req.user = decoded;
     next();
   } catch (err) {
-    return res.status(401).json({
+    return res?.status(401).json({
       success: false,
       error: "Invalid or expired token",
     });

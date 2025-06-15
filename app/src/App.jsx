@@ -16,6 +16,7 @@ import Resources from "./pages/admin/Resources";
 import ServerCreationWizard from "./pages/CreateServer";
 import AdminServers from "./pages/admin/Servers";
 import Purger from "./pages/admin/purger";
+import Store from "@/pages/Store";
 
 const ProtectedPage = ({ children, adminRequired = false }) => (
   <PrivateRoute adminRequired={adminRequired}>
@@ -45,6 +46,14 @@ function App() {
               element={
                 <ProtectedPage>
                   <ServerManager />
+                </ProtectedPage>
+              }
+            />
+            <Route
+              path="/store"
+              element={
+                <ProtectedPage>
+                  <Store />
                 </ProtectedPage>
               }
             />
